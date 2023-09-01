@@ -516,7 +516,9 @@ class Details extends Component
         })->where('status', 1)->sum('quantity');
 
         // Query the inventory table to calculate the total quantity from inventory
-        $totalQuantityInventory = Inventory::where('material_id', $selectedMaterialId)->sum('quantity');
+        $totalQuantityInventory = Inventory::where('material_id', $selectedMaterialId)
+                                            ->where('flow', 1)
+                                            ->sum('quantity');
 
         // Calculate the difference between the two quantities
         $totalQuantity = $totalQuantityRequisitions - $totalQuantityInventory;
@@ -683,7 +685,7 @@ class Details extends Component
     }
 
 
-    public function projectStore()
+/*     public function projectStore()
     {
         $query = Inventory::with(['material.category', 'material.unit'])
             ->selectRaw('material_id, SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) AS inflowSum, SUM(CASE WHEN flow = 0 THEN quantity ELSE 0 END) AS outgoingSum')
@@ -700,6 +702,42 @@ class Details extends Component
         }
 
         $this->storeItems = $query->paginate(10, ['*'], 'allStorePage');
+    } */
+
+    public function projectStore()
+    {
+        $query = Inventory::with(['material.category', 'material.unit'])
+            ->selectRaw('
+                material_id,
+                SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) AS inflowSum,
+                SUM(CASE WHEN flow = 0 THEN quantity ELSE 0 END) AS outgoingSum,
+                (SELECT SUM(quantity) FROM total_budgets WHERE material_id = inventory.material_id) AS totalBudgetQuantity,
+                (SELECT SUM(r.quantity) FROM requisitions r
+                    INNER JOIN total_budgets tb ON r.budget_id = tb.id
+                    WHERE tb.material_id = inventory.material_id AND r.status = 1) AS requisitionSum
+            ')
+            ->where('project_id', $this->projectId)
+            ->groupBy('material_id');
+
+        if ($this->storeSearch) {
+            $query->whereHas('material.category', function ($q) {
+                $q->where('category', 'like', '%' . $this->storeSearch . '%');
+            })
+            ->orWhereHas('material', function ($q) {
+                $q->where('name', 'like', '%' . $this->storeSearch . '%');
+            });
+        }
+
+        $this->storeItems = $query->paginate(10, ['*'], 'allStorePage');
+
+        // Calculate supply balance for each item
+        foreach ($this->storeItems as $storeItem) {
+            $supplyBalance = $storeItem->requisitionSum - $storeItem->inflowSum;
+            $storeItem->supplyBalance = $supplyBalance;
+
+            $budgetBalance = $storeItem->totalBudgetQuantity - $storeItem->requisitionSum;
+            $storeItem->budgetBalance = $budgetBalance;
+        }
     }
 
     public function render()

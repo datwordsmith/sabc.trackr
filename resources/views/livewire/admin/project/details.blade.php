@@ -743,7 +743,7 @@
                 <div class="card-body p-4">
                     <div class="border-bottom border-danger mb-3 d-flex">
                         <div>
-                            <h5 class="card-title fw-semibold pb-2">Project Store Report</h5>
+                            <h5 class="card-title fw-semibold pb-2">Project Inventory Report</h5>
                         </div>
                         <div class="ms-auto">
 
@@ -764,9 +764,14 @@
                                             <tr>
                                                 <th>Material</th>
                                                 <th>Category</th>
+                                                <th>Budgeted</th>
                                                 <th>Inflow</th>
                                                 <th>Out</th>
-                                                <th>Balance</th>
+                                                <th>Stock Balance</th>
+                                                <th>Approved Requisition</th>
+                                                <th>Supply Balance</th>
+                                                <th>Budget Balance</th>
+
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -774,9 +779,13 @@
                                                 <tr>
                                                     <td>{{ $storeItem->material->name }} ({{ $inventoryItem->material->unit->name }})</td>
                                                     <td>{{ $storeItem->material->category->category }}</td>
-                                                    <td>{{ $storeItem->inflowSum  }}</td>
-                                                    <td>{{ $storeItem->outgoingSum }}</td>
-                                                    <td>{{ $storeItem->inflowSum - $storeItem->outgoingSum }}</td>
+                                                    <td class="text-center">{{ $storeItem->totalBudgetQuantity  }}</td>
+                                                    <td class="text-center">{{ $storeItem->inflowSum  }}</td>
+                                                    <td class="text-center">{{ $storeItem->outgoingSum }}</td>
+                                                    <td class="text-center">{{ $storeItem->inflowSum - $storeItem->outgoingSum }}</td>
+                                                    <td class="text-center">{{ $storeItem->requisitionSum }}</td>
+                                                    <td class="text-center">{{ $storeItem->supplyBalance }}</td>
+                                                    <td class="text-center">{{ $storeItem->budgetBalance }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
