@@ -13,6 +13,10 @@
         </ol>
     @endsection
 
+    <div>
+        <p>Welcome, {{ $user->name }}</p>
+    </div>
+
     <!-- ROW #1 -->
     <div class="row">
         <!-- ROW 1, COL 1 -->
@@ -118,7 +122,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <!-- ROW #2 - BUDGET -->
@@ -777,7 +780,7 @@
                                         <tbody>
                                             @foreach ($storeItems as $storeItem)
                                                 <tr>
-                                                    <td>{{ $storeItem->material->name }} ({{ $inventoryItem->material->unit->name }})</td>
+                                                    <td>{{ $storeItem->material->name }} ({{ $storeItem->material->unit->name }})</td>
                                                     <td>{{ $storeItem->material->category->category }}</td>
                                                     <td class="text-center">{{ $storeItem->totalBudgetQuantity  }}</td>
                                                     <td class="text-center">{{ $storeItem->inflowSum  }}</td>

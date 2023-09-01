@@ -18,6 +18,7 @@ use App\Models\MaterialCategory;
 use App\Models\ProjectBudgetExtra;
 use Illuminate\Support\Facades\DB;
 use App\Models\SupplementaryBudget;
+use Illuminate\Support\Facades\Auth;
 
 class Details extends Component
 {
@@ -27,7 +28,7 @@ class Details extends Component
 
     public $projectId, $project, $client, $editClient = false, $userRoles, $projectUsers, $selectedUsers = [], $budgetId, $budgetqty;
     public $editQtyId = null, $editQty = false;
-    //public $selectedCategory, $selectedMaterial, $unassignedMaterials, $assignedMaterials;
+    public $user;
     public $search, $categories = [], $selectedMaterial, $materials = [], $selectedCategory, $materialsByCategory;
     public $selectedBudgetItem, $budgetItemName, $budgetItemCategory, $budgetItemQuantity, $budgetItemUnit;
     public $budgetItemId, $budgetBalance, $requisitionSum, $requisitionQuantity, $budgetActivity, $requisitionId;
@@ -35,6 +36,7 @@ class Details extends Component
     public $inventoryReceiver, $inventoryQuantity, $inventoryPurpose;
     public $totalMaterialQuantity, $selectedInventoryCategory, $selectedInventoryMaterial, $storeSearch;
     protected $budgetItems, $allRequisitions, $extraBudgetItems, $allBudgetItems, $storeItems;
+    public $userRoleInCurrentProject;
 
 
     protected $rules = [
@@ -43,6 +45,9 @@ class Details extends Component
 
     public function mount($slug)
     {
+        $this->user = Auth::user();
+
+
         $this->project = Project::where('slug', $slug)->firstOrFail();
         $this->projectId = $this->project->id;
         $this->client = $this->project->client;
@@ -683,26 +688,6 @@ class Details extends Component
         });
         return $totalBudgetItems;
     }
-
-
-/*     public function projectStore()
-    {
-        $query = Inventory::with(['material.category', 'material.unit'])
-            ->selectRaw('material_id, SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) AS inflowSum, SUM(CASE WHEN flow = 0 THEN quantity ELSE 0 END) AS outgoingSum')
-            ->where('project_id', $this->projectId)
-            ->groupBy('material_id');
-
-        if ($this->storeSearch) {
-            $query->whereHas('material.category', function ($q) {
-                $q->where('category', 'like', '%' . $this->storeSearch . '%');
-            })
-            ->orWhereHas('material', function ($q) {
-                $q->where('name', 'like', '%' . $this->storeSearch . '%');
-            });
-        }
-
-        $this->storeItems = $query->paginate(10, ['*'], 'allStorePage');
-    } */
 
     public function projectStore()
     {
