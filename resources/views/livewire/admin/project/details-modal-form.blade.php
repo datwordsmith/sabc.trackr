@@ -384,52 +384,64 @@
                     <div wire:loading.remove class="">
                         <form wire:submit.prevent="removeInventory()">
                             <div class="mb-3">
-                                <select wire:model="selectedInventoryCategory" class="form-select" required wire:change="resetMaterialFields">
+                                <select wire:model="selectedStoreCategory" class="form-select" required wire:change="resetMaterialOutFields">
                                     <option value="">Select a category</option>
-                                    @foreach ($inventoryCategories as $category)
+                                    @foreach ($storeCategories as $category)
                                         <option value="{{ $category->id }}">{{ $category->category }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <select wire:model="selectedInventoryMaterial" class="form-control"
-                                    @if (empty($selectedInventoryCategory)) disabled @endif required wire:change="updateTotalMaterialQuantity">
+                                <select wire:model="selectedStoreMaterial" class="form-control"
+                                    @if (empty($selectedStoreCategory)) disabled @endif required wire:change="updateStoreMaterialQuantity">
                                     <option value="">Select a material</option>
-                                    @foreach ($inventoryMaterials as $material)
-                                        @if ($material->category_id == $selectedInventoryCategory)
+                                    @foreach ($storeMaterials as $material)
+                                        @if ($material->category_id == $selectedStoreCategory)
                                             <option value="{{ $material->id }}">{{ $material->name }}</option>
                                         @endif
                                     @endforeach
                                 </select>
                             </div>
 
-                            @if (!empty($selectedInventoryMaterial))
-                                @if($storeBalance == 0 )
+                            @if (!empty($selectedStoreMaterial))
+                                @if($pendingAllocations)
                                     <div class="alert alert-danger" role="alert">
-                                        Available Quantity: {{ $storeBalance }}
+                                        There is a Pending Allocation for this material.
                                     </div>
                                 @else
-                                    <div class="mb-3">
-                                        <label for="quantity" class="form-label">Quantity in Stock: {{ $storeBalance }}</label>
-                                        <input type="number" id="quantity" class="form-control" wire:model.defer="inventoryQuantity" min="0" max="{{ $storeBalance }}" required>
-                                    </div>
+                                    @if($totalStoreMaterialQuantity == 0 )
+                                        <div class="alert alert-danger" role="alert">
+                                            Available Quantity: {{ $totalStoreMaterialQuantity }}
+                                        </div>
+                                    @else
+                                        <div class="mb-3">
+                                            <label for="quantity" class="form-label">Quantity in Stock: {{ $totalStoreMaterialQuantity }}</label>
+                                            <input type="number" id="quantity" class="form-control" wire:model.defer="storeQuantity" min="0" max="{{ $totalStoreMaterialQuantity }}" required>
+                                        </div>
 
-                                    <div class="mb-3">
-                                        <label for="receiver" class="form-label">Receiver</label>
-                                        <input type="text" id="receiver" class="form-control" wire:model.defer="inventoryReceiver" required>
-                                    </div>
+                                        <div class="mb-3">
+                                            <label for="receiver" class="form-label">Receiver</label>
+                                            <input type="text" id="receiver" class="form-control" wire:model.defer="storeReceiver" required>
+                                        </div>
 
-                                    <div class="mb-3">
-                                        <label for="purpose" class="form-label">Purpose</label>
-                                        <textarea id="purpose" class="form-control" wire:model.defer="inventoryPurpose" required></textarea>
-                                    </div>
+                                        <div class="mb-3">
+                                            <label for="purpose" class="form-label">Purpose</label>
+                                            <textarea id="purpose" class="form-control" wire:model.defer="storePurpose" required></textarea>
+                                        </div>
+                                    @endif
                                 @endif
                             @endif
 
-                            @if($totalMaterialQuantity > 0 )
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary btn-lg">Save</button>
-                                </div>
+
+
+                            @if($pendingAllocations)
+
+                            @else
+                                @if($totalStoreMaterialQuantity > 0 )
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                    </div>
+                                @endif
                             @endif
                         </form>
                     </div>
@@ -438,3 +450,65 @@
         </div>
     </div>
     <!-- END OUTFLOW MODAL -->
+
+    <!-- DELETE ALLOCATION MODAL -->
+    <div wire:ignore.self class="modal fade" id="deleteAllocationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Delete Material Allocation</h1>
+                    <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div wire:loading class="py-5">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-grow text-danger" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div wire:loading.remove>
+                    <form wire:submit.prevent="destroyAllocation()">
+                        <div class="modal-body">
+                            <h4>Are you sure you want to delete this Item?</h4>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click ="closeModal" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END DELETE MODAL -->
+
+    <!-- APPROVE AALOCATION MODAL -->
+    <div wire:ignore.self class="modal fade" id="approveAllocationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Approve Allocation</h1>
+                    <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div wire:loading class="py-5">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-grow text-danger" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div wire:loading.remove>
+                    <form wire:submit.prevent="approveAllocation()">
+                        <div class="modal-body">
+                            <h6>Do you want to approve all pending material allocations for this project?</h6>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click ="closeModal" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check-double"></i> Yes, Approve</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END MODAL -->

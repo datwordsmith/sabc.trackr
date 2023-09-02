@@ -14,7 +14,7 @@
     @endsection
 
     <div>
-        <p>Welcome, {{ $user->name }}</p>
+        <p>Welcome, {{ $user->name }} </p>
     </div>
 
     <!-- ROW #1 -->
@@ -70,14 +70,16 @@
                         </div>
                     </div>
                     <div class="mt-2">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input text-success" type="checkbox" id="status" value="1"
-                                wire:model.defer="status">
-                            <label class="form-check-label fw-bold text-success" for="status">
-                                Activate Project
-                            </label>
-                            <span class="labels" data-on="ON" data-off="OFF"></span>
-                        </div>
+                        @if($currentUserRole->role == "Project Manager")
+                            <div class="form-check form-switch">
+                                <input class="form-check-input text-success" type="checkbox" id="status" value="1"
+                                    wire:model.defer="status">
+                                <label class="form-check-label fw-bold text-success" for="status">
+                                    Activate Project
+                                </label>
+                                <span class="labels" data-on="ON" data-off="OFF"></span>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -663,7 +665,7 @@
     </div>
     <!-- END REQUISITION -->
 
-    <!-- ROW #4 - INVENTORY -->
+    <!-- ROW #4 - INFLOW -->
     <div class="row">
         <!-- ROW 4, COL 1 -->
         <div class="col-md-12 d-flex align-items-stretch">
@@ -671,16 +673,13 @@
                 <div class="card-body p-4">
                     <div class="border-bottom border-danger mb-3 d-flex">
                         <div>
-                            <h5 class="card-title fw-semibold pb-2">Site Inventory (In and Out)</h5>
+                            <h5 class="card-title fw-semibold pb-2">Material Infow</h5>
                         </div>
                         <div class="ms-auto">
                             <div class="btn-group" role="group" aria-label="">
                                 <a href="#" data-bs-toggle="modal" data-bs-target="#supplyModal"
                                         class="btn btn-sm btn-success text-white"><i
                                         class="far fa-arrow-alt-circle-right fa-rotate-90"></i> In</a>
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#distributionModal"
-                                        class="btn btn-sm btn-danger text-white"><i
-                                        class="far fa-arrow-alt-circle-right fa-rotate-270"></i> Out</a>
                             </div>
                         </div>
                     </div>
@@ -702,8 +701,8 @@
                                                 <th>Category</th>
                                                 <th>Quantity</th>
                                                 <th>Purpose</th>
-                                                <th>In/Out</th>
-                                                <th>Receiver</th>
+                                                <th class="text-center">Status</th>
+                                                <th>Received By</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -712,7 +711,7 @@
                                                     <td>{{ $inventoryItem->created_at->format('d-M-Y') }}</td>
                                                     <td>{{ $inventoryItem->material->name }} ({{ $inventoryItem->material->unit->name }})</td>
                                                     <td>{{ $inventoryItem->material->category->category }}</td>
-                                                    <td>{{ $inventoryItem->quantity }}</td>
+                                                    <td class="text-center">{{ $inventoryItem->quantity }}</td>
                                                     <td>{{ $inventoryItem->purpose }}</td>
                                                     <td class="text-center">
                                                         @if ($inventoryItem->flow == 1)
@@ -736,7 +735,95 @@
             </div>
         </div>
     </div>
-    <!-- END INVENTORY -->
+    <!-- END INFLOW -->
+
+    <!-- ROW - ALLOCATION -->
+    <div class="row">
+        <!-- ROW 4, COL 1 -->
+        <div class="col-md-12 d-flex align-items-stretch">
+            <div class="card w-100">
+                <div class="card-body p-4">
+                    <div class="border-bottom border-danger mb-3 d-flex">
+                        <div>
+                            <h5 class="card-title fw-semibold pb-2">Material Allocation</h5>
+                        </div>
+                        <div class="ms-auto">
+                            <div class="btn-group" role="group" aria-label="">
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#distributionModal"
+                                        class="btn btn-sm btn-danger text-white"><i
+                                        class="far fa-arrow-alt-circle-right fa-rotate-270"></i> Out</a>
+                                @if ($allocatedItems->count() > 0)
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#approveAllocationModal"
+                                        class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
+                                        Approve All</a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- ROW 2, COL 1 -->
+                        <div class="col-md-12">
+                            <div>
+
+                                <div class="mb-3">
+                                    <input type="text" class="form-control mb-2" wire:model="inventorySearch" placeholder="Search...">
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-items-center mb-0">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Material</th>
+                                                <th>Category</th>
+                                                <th class="text-center">Quantity</th>
+                                                <th>Purpose</th>
+                                                <th class="text-center">Status</th>
+                                                <th>Receiver</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($allocatedItems as $allocatedItem)
+                                                <tr>
+                                                    <td>{{ $allocatedItem->created_at->format('d-M-Y') }}</td>
+                                                    <td>{{ $allocatedItem->material->name }} ({{ $allocatedItem->material->unit->name }})</td>
+                                                    <td>{{ $allocatedItem->material->category->category }}</td>
+                                                    <td class="text-center">{{ $allocatedItem->quantity }}</td>
+                                                    <td>{{ $allocatedItem->purpose }}</td>
+                                                    <td class="text-center">
+                                                        @if ($allocatedItem->flow == '1')
+                                                            <i class="far fa-check-circle text-success"></i>
+                                                        @else
+                                                            <i class="fas fa-pause-circle fa-lg" style="color: #ffa500;"></i>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $allocatedItem->receiver }}</td>
+                                                    <td>
+                                                        @if ($allocatedItem->flow == 0)
+                                                            <a href="#"
+                                                                wire:click="deleteAllocation({{ $allocatedItem->id }})"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#deleteAllocationModal"
+                                                                class="btn btn-sm btn-danger text-white"><i
+                                                                    class="fas fa-trash-alt"></i></a>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{ $allocatedItems->links() }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END ALLOCATION -->
 
     <!-- ROW #5 - STORE -->
     <div class="row">
@@ -820,6 +907,8 @@
             $('#activateSupplementaryBudgetModal').modal('hide');
             $('#supplyModal').modal('hide');
             $('#distributionModal').modal('hide');
+            $('#deleteAllocationModal').modal('hide');
+            $('#approveAllocationModal').modal('hide');
         });
     </script>
 @endsection

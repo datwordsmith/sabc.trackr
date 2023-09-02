@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admin\Project;
 
+use App\Models\Allocation;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Project;
@@ -32,11 +33,13 @@ class Details extends Component
     public $search, $categories = [], $selectedMaterial, $materials = [], $selectedCategory, $materialsByCategory;
     public $selectedBudgetItem, $budgetItemName, $budgetItemCategory, $budgetItemQuantity, $budgetItemUnit;
     public $budgetItemId, $budgetBalance, $requisitionSum, $requisitionQuantity, $budgetActivity, $requisitionId;
-    public $requisitionSearch, $inventorySearch, $vendors, $selectedVendor, $vendor_id;
+    public $requisitionSearch, $inventorySearch, $allocationSearch, $vendors, $selectedVendor, $vendor_id;
     public $inventoryReceiver, $inventoryQuantity, $inventoryPurpose;
     public $totalMaterialQuantity, $selectedInventoryCategory, $selectedInventoryMaterial, $storeSearch;
+    public $totalStoreMaterialQuantity, $selectedStoreCategory, $selectedStoreMaterial;
+    public $storeReceiver, $storeQuantity, $storePurpose, $allocationId, $pendingAllocation;
     protected $budgetItems, $allRequisitions, $extraBudgetItems, $allBudgetItems, $storeItems;
-    public $userRoleInCurrentProject;
+    public $userCredentials, $currentUserRole;
 
 
     protected $rules = [
@@ -63,8 +66,10 @@ class Details extends Component
         $this->materials = Material::with('unit')->get(); // Fetch all materials with their associated units
         $this->fetchRequisitions();
         $this->totalMaterialQuantity = $this->calculateTotalMaterialQuantity();
-        //$this->fetchInventoryItems();
+        $this->totalStoreMaterialQuantity = $this->calculateStoreMaterialQuantity();
         $this->projectStore();
+
+        $this->userCredentials();
     }
 
     //-- CLIENT OPS --//
@@ -483,6 +488,27 @@ class Details extends Component
 
     }
 
+    public function deleteAllocation($allocationId)
+    {
+        $this->allocationId = $allocationId;
+    }
+
+    public function destroyAllocation()
+    {
+        // Find the budget item by its ID
+        $allocationItem = Allocation::findOrFail($this->allocationId);
+
+        // Delete the budget item
+        $allocationItem->delete();
+
+        // Fetch the budget items again to update the table
+        //$this->fetchRequisitions();
+
+        $this->dispatchBrowserEvent('close-modal');
+        $this->resetInput();
+
+    }
+
     public function approveRequisition()
     {
         Requisition::whereHas('budget', function ($query) {
@@ -506,6 +532,7 @@ class Details extends Component
             ->select('requisitions.*')
             ->paginate(10);
     }
+
     //-- END REQUISITION --//
 
     //-- INVENTORY ITEMS --//
@@ -531,6 +558,42 @@ class Details extends Component
         return $totalQuantity;
     }
 
+
+    public function calculateStoreMaterialQuantity()
+    {
+        $selectedMaterialId = $this->selectedStoreMaterial;
+
+        // Query the requisitions table to calculate the total quantity from requisitions
+        $totalQuantityInflow = Inventory::where('material_id', $selectedMaterialId)
+                                ->where('project_id', $this->projectId)
+                                ->where('flow', 1)
+                                ->sum('quantity');
+
+        // Query the inventory table to calculate the total quantity from inventory
+        $totalQuantityOut = Allocation::where('material_id', $selectedMaterialId)
+                                        ->where('project_id', $this->projectId)
+                                        ->where('flow', 1)
+                                        ->sum('quantity');
+
+        // Calculate the difference between the two quantities
+        $totalStoreQuantity = $totalQuantityInflow - $totalQuantityOut;
+
+        return $totalStoreQuantity;
+    }
+
+
+    public function checkExistingAllocation()
+    {
+        $selectedMaterialId = $this->selectedStoreMaterial;
+
+        // Query to check that selected material is pending in the Allocation Model
+        $pendingAllocation = Allocation::where('material_id', $selectedMaterialId)
+                                        ->where('project_id', $this->projectId)
+                                        ->where('flow', 0)
+                                        ->get();
+
+        return $pendingAllocation;
+    }
     //-- END INVENTORY ITEMS --//
 
     public function updateTotalMaterialQuantity()
@@ -539,6 +602,11 @@ class Details extends Component
     }
 
 
+    public function updateStoreMaterialQuantity()
+    {
+        $this->totalStoreMaterialQuantity = $this->calculateStoreMaterialQuantity();
+    }
+
     public function calculateInflowSum()
     {
         $selectedMaterialId = $this->selectedInventoryMaterial;
@@ -546,6 +614,7 @@ class Details extends Component
         // Query the inventory table to calculate the summation of inflow (In) for the material
         $inflowSum = Inventory::where('material_id', $selectedMaterialId)
             ->where('flow', 1) // Inflow (In)
+            ->where('project_id', $this->projectId)
             ->sum('quantity');
 
         return $inflowSum;
@@ -555,9 +624,9 @@ class Details extends Component
     {
         $selectedMaterialId = $this->selectedInventoryMaterial;
 
-        // Query the inventory table to calculate the summation of outgoings (Out) for the material
-        $outgoingsSum = Inventory::where('material_id', $selectedMaterialId)
-            ->where('flow', 0) // Outgoings (Out)
+        // Query the allocations table to calculate the summation of outgoings (Out) for the material
+        $outgoingsSum = Allocation::where('material_id', $selectedMaterialId)
+            ->where('project_id', $this->projectId)
             ->sum('quantity');
 
         return $outgoingsSum;
@@ -618,6 +687,14 @@ class Details extends Component
         $this->inventoryPurpose = null;
     }
 
+    public function resetMaterialOutFields()
+    {
+        // Reset the selectedInventoryMaterial and other related fields here
+        $this->selectedStoreMaterial = null;
+        $this->storeQuantity = null;
+        $this->storeReceiver = null;
+        $this->storePurpose = null;
+    }
     //-- END INFLOW --//
 
 
@@ -626,20 +703,20 @@ class Details extends Component
     {
         // Validate the form data
         $this->validate([
-            'selectedInventoryCategory' => 'required',
-            'selectedInventoryMaterial' => 'required',
-            'inventoryQuantity' => 'required|numeric|min:0|max:' . $this->calculateTotalMaterialQuantity(),
-            'inventoryReceiver' => 'required',
-            'inventoryPurpose' => 'required',
+            'selectedStoreCategory' => 'required',
+            'selectedStoreMaterial' => 'required',
+            'storeQuantity' => 'required|numeric|min:0|max:' . $this->calculateStoreMaterialQuantity(),
+            'storeReceiver' => 'required',
+            'storePurpose' => 'required',
         ]);
 
         // Create a new Inventory record
-        Inventory::create([
-            'material_id' => $this->selectedInventoryMaterial,
+        Allocation::create([
+            'material_id' => $this->selectedStoreMaterial,
             'project_id' => $this->projectId,
-            'quantity' => $this->inventoryQuantity,
-            'receiver' => $this->inventoryReceiver,
-            'purpose' => $this->inventoryPurpose,
+            'quantity' => $this->storeQuantity,
+            'receiver' => $this->storeReceiver,
+            'purpose' => $this->storePurpose,
             'flow' => 0,
             // Set any other fields you have in your Inventory model
         ]);
@@ -647,25 +724,35 @@ class Details extends Component
         $this->projectStore();
 
         // Reset form fields
-        $this->selectedInventoryCategory = '';
-        $this->selectedInventoryMaterial = '';
-        $this->inventoryQuantity = '';
-        $this->inventoryReceiver = '';
-        $this->inventoryPurpose = '';
+        $this->selectedStoreCategory = '';
+        $this->selectedStoreMaterial = '';
+        $this->storeQuantity = '';
+        $this->storeReceiver = '';
+        $this->storePurpose = '';
 
 
         $this->resetForm([
-            'selectedInventoryCategory',
-            'selectedInventoryMaterial',
-            'inventoryQuantity',
-            'inventoryReceiver',
-            'inventoryPurpose',
+            'selectedStoreCategory',
+            'selectedStoreMaterial',
+            'storeQuantity',
+            'storeReceiver',
+            'storePurpose',
         ]);
         $this->closeModal();
         $this->dispatchBrowserEvent('close-modal');
     }
     //-- END OUTGOINGS --//
 
+    public function approveAllocation()
+    {
+        Allocation::where('project_id', $this->projectId)
+        ->where('flow', 0)
+        ->update(['flow' => 1]);
+
+
+        $this->dispatchBrowserEvent('close-modal');
+        $this->resetInput();
+    }
 
     public function allBudgetItems()
     {
@@ -695,11 +782,11 @@ class Details extends Component
             ->selectRaw('
                 material_id,
                 SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) AS inflowSum,
-                SUM(CASE WHEN flow = 0 THEN quantity ELSE 0 END) AS outgoingSum,
                 (SELECT SUM(quantity) FROM total_budgets WHERE material_id = inventory.material_id) AS totalBudgetQuantity,
                 (SELECT SUM(r.quantity) FROM requisitions r
                     INNER JOIN total_budgets tb ON r.budget_id = tb.id
-                    WHERE tb.material_id = inventory.material_id AND r.status = 1) AS requisitionSum
+                    WHERE tb.material_id = inventory.material_id AND r.status = 1) AS requisitionSum,
+                (SELECT SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) FROM allocations WHERE material_id = inventory.material_id) AS outgoingSum
             ')
             ->where('project_id', $this->projectId)
             ->groupBy('material_id');
@@ -709,6 +796,9 @@ class Details extends Component
                 $q->where('category', 'like', '%' . $this->storeSearch . '%');
             })
             ->orWhereHas('material', function ($q) {
+                $q->where('name', 'like', '%' . $this->storeSearch . '%');
+            })
+            ->orWhereHas('material.unit', function ($q) {
                 $q->where('name', 'like', '%' . $this->storeSearch . '%');
             });
         }
@@ -723,6 +813,17 @@ class Details extends Component
             $budgetBalance = $storeItem->totalBudgetQuantity - $storeItem->requisitionSum;
             $storeItem->budgetBalance = $budgetBalance;
         }
+    }
+
+    public function userCredentials()
+    {
+        $currentUserId = $this->user->id;
+        $projectId = $this->projectId;
+        $query = ProjectUser::join('user_roles', 'project_user.role_id', '=', 'user_roles.id')
+                        ->where('user_id', $currentUserId)
+                        ->where('project_id', $projectId);
+
+        $this->currentUserRole = $query->first(); // Set the property
     }
 
     public function render()
@@ -793,17 +894,41 @@ class Details extends Component
                     $query->whereHas('material.category', function ($q) {
                         $q->where('category', 'like', '%' . $this->inventorySearch . '%');
                     })
+                    ->orWhereHas('material', function ($q) {
+                        $q->where('name', 'like', '%' . $this->inventorySearch . '%');
+                    })
                     ->orWhereHas('material.unit', function ($q) {
                         $q->where('name', 'like', '%' . $this->inventorySearch . '%');
                     })
                     ->orWhere('quantity', 'like', '%' . $this->inventorySearch . '%')
                     ->orWhere('receiver', 'like', '%' . $this->inventorySearch . '%')
                     ->orWhere('purpose', 'like', '%' . $this->inventorySearch . '%')
-                    ->orWhereRaw('(CASE WHEN flow = 1 THEN "In" ELSE "Out" END) LIKE ?', ['%' . $this->inventorySearch . '%'])
+                    ->orWhereRaw('(CASE WHEN flow = 1 THEN "Inflow" END) LIKE ?', ['%' . $this->inventorySearch . '%'])
                     ->orWhere('created_at', 'like', '%' . $this->inventorySearch . '%');
                 })
                 ->orderBy('created_at', 'desc')
                 ->paginate(10, ['*'], 'allInventoryPage');
+
+        $allocatedItems = Allocation::with(['material.category', 'material.unit'])
+                ->where('project_id', $this->projectId)
+                ->where(function ($query) {
+                    $query->whereHas('material.category', function ($q) {
+                        $q->where('category', 'like', '%' . $this->allocationSearch . '%');
+                    })
+                    ->orWhereHas('material', function ($q) {
+                        $q->where('name', 'like', '%' . $this->allocationSearch . '%');
+                    })
+                    ->orWhereHas('material.unit', function ($q) {
+                        $q->where('name', 'like', '%' . $this->allocationSearch . '%');
+                    })
+                    ->orWhere('quantity', 'like', '%' . $this->allocationSearch . '%')
+                    ->orWhere('receiver', 'like', '%' . $this->allocationSearch . '%')
+                    ->orWhere('purpose', 'like', '%' . $this->allocationSearch . '%')
+                    ->orWhereRaw('(CASE WHEN flow = 1 THEN "Inflow" END) LIKE ?', ['%' . $this->allocationSearch . '%'])
+                    ->orWhere('created_at', 'like', '%' . $this->allocationSearch . '%');
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate(10, ['*'], 'allAllocationPage');
 
         $inventoryCategories = MaterialCategory::whereIn('id', function ($query) {
             $query->select('material_category.id')
@@ -824,6 +949,20 @@ class Details extends Component
                 ->where('total_budgets.project_id', $this->projectId);
         })->get();
 
+        $storeCategories = MaterialCategory::whereIn('id', function ($query) {
+            $query->select('material_category.id')
+                ->from('inventory')
+                ->join('materials', 'inventory.material_id', '=', 'materials.id')
+                ->join('material_category', 'materials.category_id', '=', 'material_category.id')
+                ->where('inventory.project_id', $this->projectId);
+        })->get();
+
+        $storeMaterials = Material::whereIn('id', function ($query) {
+            $query->select('material_id')
+                ->from('inventory')
+                ->where('project_id', $this->projectId);
+        })->get();
+
         $this->projectStore();
         $totalMaterialQuantity = $this->calculateTotalMaterialQuantity();
 
@@ -832,6 +971,8 @@ class Details extends Component
         $inflowSum = $this->calculateInflowSum();
         $outgoingsSum = $this->calculateOutgoingsSum();
         $storeBalance = $inflowSum - $outgoingsSum;
+
+        $this->pendingAllocation = $this->checkExistingAllocation();
 
         return view('livewire.admin.project.details', [
             'users' => $users,
@@ -843,13 +984,17 @@ class Details extends Component
             'allRequisitions' => $allRequisitions,
             'supplementaryBudgetStatus' => $supplementaryBudgetStatus,
             'inventoryItems' => $inventoryItems,
+            'allocatedItems' => $allocatedItems,
             'inventoryCategories' => $inventoryCategories,
             'inventoryMaterials' => $inventoryMaterials,
+            'storeCategories' => $storeCategories,
+            'storeMaterials' => $storeMaterials,
             'totalMaterialQuantity' => $this->totalMaterialQuantity,
             'inflowSum' => $inflowSum,
             'outgoingsSum' => $outgoingsSum,
             'storeBalance' => $storeBalance,
             'storeItems' => $this->storeItems,
+            'pendingAllocations' => $this->pendingAllocation,
         ])->extends('layouts.admin')->section('content');
     }
 
