@@ -142,6 +142,7 @@
                                     <i class="fas fa-check-double"></i> Approve Budget
                                 </a>
                             @endif
+                            <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('primary_budget')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                         </div>
                     </div>
                     <div class="row">
@@ -239,7 +240,7 @@
                                             @endif
                                         </div>
                                         <div class="table-responsive">
-                                            <table id="budget_table" class="table table-striped align-items-center mb-0"
+                                            <table id="primary_budget" class="table table-striped align-items-center mb-0"
                                                 style="width:100%">
                                                 <thead class="table-dark">
                                                     <tr>
@@ -340,6 +341,7 @@
                             <button class="btn btn-dark btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#extraBudget" aria-controls="extraBudget" aria-expanded="true">
                                 <i class="fas fa-window-minimize"></i>
                             </button>
+                            <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('supplementary_budget')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                         </div>
                     </div>
                     <div class="row collapse" id="extraBudget">
@@ -417,7 +419,7 @@
                                             @endif
                                         </div>
                                         <div class="table-responsive">
-                                            <table id="budget_table" class="table table-striped align-items-center mb-0"
+                                            <table id="supplementary_budget" class="table table-striped align-items-center mb-0"
                                                 style="width:100%">
                                                 <thead class="table-dark">
                                                     <tr>
@@ -509,7 +511,7 @@
                             <h5 class="card-title fw-semibold pb-2">Cummulative Project Budget</h5>
                         </div>
                         <div class="ms-auto">
-
+                            <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('cummulative_budget')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                         </div>
                     </div>
                     <div class="row">
@@ -520,7 +522,7 @@
                                             <input type="text" class="form-control mb-2" wire:model="search" placeholder="Search...">
                                         </div>
                                         <div class="table-responsive">
-                                            <table id="budget_table" class="table table-striped align-items-center mb-0"
+                                            <table id="cummulative_budget" class="table table-striped align-items-center mb-0"
                                                 style="width:100%">
                                                 <thead class="table-dark">
                                                     <tr class="text-secondary text-xs font-weight-semibold opacity-7">
@@ -591,9 +593,11 @@
                             @if ($project && $project->status == 1)
                                 <a href="#" data-bs-toggle="modal" data-bs-target="#approveRequisitionModal"
                                     class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
-                                    Approve All</a>
+                                    <span class="d-none d-md-inline">Approve All</span></a>
                             @endif
+                            <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('requisitions')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                         </div>
+
                     </div>
                     @if ($project && $project->status == 1)
                         <div class="mb-3">
@@ -601,7 +605,7 @@
                                 placeholder="Search...">
                         </div>
                         <div class="table-responsive">
-                            <table id="budget_table" class="table table-striped align-items-center mb-0"
+                            <table id="requisitions" class="table table-striped align-items-center mb-0"
                                 style="width:100%">
                                 <thead class="table-dark">
                                     <tr class="text-secondary text-xs font-weight-semibold opacity-7">
@@ -679,8 +683,9 @@
                             <div class="btn-group" role="group" aria-label="">
                                 <a href="#" data-bs-toggle="modal" data-bs-target="#supplyModal"
                                         class="btn btn-sm btn-success text-white"><i
-                                        class="far fa-arrow-alt-circle-right fa-rotate-90"></i> In</a>
+                                        class="far fa-arrow-alt-circle-right fa-rotate-90"></i> <span class="d-none d-md-inline">In</span></a>
                             </div>
+                            <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('materialInflow')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                         </div>
                     </div>
 
@@ -693,7 +698,7 @@
                                     <input type="text" class="form-control mb-2" wire:model="inventorySearch" placeholder="Search...">
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-striped align-items-center mb-0">
+                                    <table class="table table-striped align-items-center mb-0" id="materialInflow">
                                         <thead class="table-dark">
                                             <tr>
                                                 <th>Date</th>
@@ -751,13 +756,14 @@
                             <div class="btn-group" role="group" aria-label="">
                                 <a href="#" data-bs-toggle="modal" data-bs-target="#distributionModal"
                                         class="btn btn-sm btn-danger text-white"><i
-                                        class="far fa-arrow-alt-circle-right fa-rotate-270"></i> Out</a>
+                                        class="far fa-arrow-alt-circle-right fa-rotate-270"></i> <span class="d-none d-md-inline">Out</span></a>
                                 @if ($allocatedItems->count() > 0)
                                     <a href="#" data-bs-toggle="modal" data-bs-target="#approveAllocationModal"
                                         class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
-                                        Approve All</a>
+                                        <span class="d-none d-md-inline">Approve All</span></a>
                                 @endif
                             </div>
+                            <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('materialDistribution')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                         </div>
                     </div>
 
@@ -767,10 +773,10 @@
                             <div>
 
                                 <div class="mb-3">
-                                    <input type="text" class="form-control mb-2" wire:model="inventorySearch" placeholder="Search...">
+                                    <input type="text" class="form-control mb-2" wire:model="allocationSearch" placeholder="Search...">
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-striped align-items-center mb-0">
+                                    <table class="table table-striped align-items-center mb-0" id="materialDistribution">
                                         <thead class="table-dark">
                                             <tr>
                                                 <th>Date</th>
@@ -793,9 +799,9 @@
                                                     <td>{{ $allocatedItem->purpose }}</td>
                                                     <td class="text-center">
                                                         @if ($allocatedItem->flow == '1')
-                                                            <i class="far fa-check-circle text-success"></i>
+                                                            <span class="badge bg-success">Approved</span>
                                                         @else
-                                                            <i class="fas fa-pause-circle fa-lg" style="color: #ffa500;"></i>
+                                                            <span class="badge bg-warning">Pending</span>
                                                         @endif
                                                     </td>
                                                     <td>{{ $allocatedItem->receiver }}</td>
@@ -836,7 +842,7 @@
                             <h5 class="card-title fw-semibold pb-2">Project Inventory Report</h5>
                         </div>
                         <div class="ms-auto">
-
+                            <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('inventory')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                         </div>
                     </div>
 
@@ -849,7 +855,7 @@
                                     <input type="text" class="form-control mb-2" wire:model="storeSearch" placeholder="Search...">
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-striped align-items-center mb-0">
+                                    <table class="table table-striped align-items-center mb-0" id="inventory">
                                         <thead class="table-dark">
                                             <tr>
                                                 <th>Material</th>
@@ -895,7 +901,10 @@
 
 
 @section('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+
     <script>
+
         window.addEventListener('close-modal', event => {
             $('#assignTeamModal').modal('hide');
             $('#deleteBudgetModal').modal('hide');
@@ -910,5 +919,68 @@
             $('#deleteAllocationModal').modal('hide');
             $('#approveAllocationModal').modal('hide');
         });
+
+
+        function exportToCSV(tableId) {
+            const table = document.querySelector(`#${tableId}`);
+            const csv = toCSV(table);
+            downloadFile(csv, 'csv', `${tableId}_report.csv`);
+        }
+
+        function toCSV(table) {
+            const t_rows = table.querySelectorAll('tr');
+            return [...t_rows].map(row=>{
+                const cells = row.querySelectorAll('th, td');
+                return [...cells].map(cell => cell.textContent.trim()).join(',');
+            }).join('\n')
+        }
+
+        function downloadFile(data, fileType, fileName = '') {
+            const a = document.createElement('a');
+            a.download = fileName;
+            const mime_types = {
+                'json':'application/json',
+                'csv':'text/csv',
+                'excel': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }
+            a.href = `
+                data:${mime_types[fileType]};charset=utf-8,${encodeURIComponent(data)}
+            `;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        /* const csv_btn = document.querySelector('#toExcel');
+        const totalInventory_table = document.querySelector('#totalInventory');
+        csv_btn.onclick = () => {
+            const csv = toCSV(totalInventory_table);
+            downloadFile(csv, 'csv', 'inventory_report.csv');
+        }
+
+        const toCSV = function(table) {
+            const t_rows = table.querySelectorAll('tr');
+            return [...t_rows].map(row=>{
+                const cells = row.querySelectorAll('th, td');
+                return [...cells].map(cell => cell.textContent.trim()).join(',');
+            }).join('\n')
+        }
+
+        const downloadFile = function(data, fileType, fileName = '') {
+            const a = document.createElement('a');
+            a.download = fileName;
+            const mime_types = {
+                'json':'application/json',
+                'csv':'text/csv',
+                'excel': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }
+            a.href = `
+                data:${mime_types[fileType]};charset=utf-8,${encodeURIComponent(data)}
+            `;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } */
+
     </script>
 @endsection

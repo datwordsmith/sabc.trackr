@@ -53,6 +53,8 @@
     <script src="{{ asset('admin/assets/js/app.min.js') }}"></script>
     <script src="{{ asset('admin/assets/libs/simplebar/dist/simplebar.js') }}"></script>
 
+
+
     @livewireScripts
     @yield('scripts')
 
