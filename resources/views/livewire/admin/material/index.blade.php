@@ -18,39 +18,45 @@
                     Add New
                   </div>
                 <div class="card-body p-4">
-                    <form wire:submit.prevent="storeMaterial()">
-                        <div class="mb-3">
-                            <input type="text" class="form-control" placeholder = "Site Material" wire:model.defer="name">
-                            @error('name')
-                                <small class="error text-danger">{{ $message }}</small>
-                            @enderror
+                    @if($admin->isAdmin)
+                        <form wire:submit.prevent="storeMaterial()">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" placeholder = "Site Material" wire:model.defer="name">
+                                @error('name')
+                                    <small class="error text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-select" wire:model.defer="category_id" required>
+                                    <option value="">Select a category</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                    @endforeach
+                                </select>
+                                @error('category_id')
+                                    <small class="error text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-select" wire:model.defer="unit_id" required>
+                                    <option value="">Select a Unit</option>
+                                    @foreach ($units as $unit)
+                                        <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('unit_id')
+                                    <small class="error text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                            </div>
+                        </form>
+                    @else
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i> You are not allowed to add New items. Please contact Administrator.
                         </div>
-                        <div class="mb-3">
-                            <select class="form-select" wire:model.defer="category_id" required>
-                                <option value="">Select a category</option>
-                                @foreach ($categories as $category)
-                                    <option value="{{ $category->id }}">{{ $category->category }}</option>
-                                @endforeach
-                            </select>
-                            @error('category_id')
-                                <small class="error text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <select class="form-select" wire:model.defer="unit_id" required>
-                                <option value="">Select a Unit</option>
-                                @foreach ($units as $unit)
-                                    <option value="{{ $unit->id }}">{{ $unit->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('unit_id')
-                                <small class="error text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Save</button>
-                        </div>
-                    </form>
+                    @endif
                 </div>
             </div>
 
@@ -80,7 +86,9 @@
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-4">Material</th>
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-3">Category</th>
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-3">Unit</th>
-                                    <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Action</th>
+                                    @if($admin->isAdmin)
+                                        <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Action</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -89,12 +97,14 @@
                                         <td>{{$material->name}}</td>
                                         <td>{{$material->category}}</td>
                                         <td>{{$material->unit}}</td>
-                                        <td class="">
-                                            <div class="btn-group" role="group" aria-label="">
-                                                <a href="#" wire:click="editMaterial({{$material->id}})" data-bs-toggle="modal" data-bs-target="#editMaterialModal" class="btn btn-sm btn-warning text-white"><i class="fas fa-pen"></i></a>
-                                                <a href="#" wire:click="deleteMaterial({{$material->id}})" data-bs-toggle="modal" data-bs-target="#deleteMaterialModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
-                                            </div>
-                                        </td>
+                                        @if($admin->isAdmin)
+                                            <td class="">
+                                                <div class="btn-group" role="group" aria-label="">
+                                                    <a href="#" wire:click="editMaterial({{$material->id}})" data-bs-toggle="modal" data-bs-target="#editMaterialModal" class="btn btn-sm btn-warning text-white"><i class="fas fa-pen"></i></a>
+                                                    <a href="#" wire:click="deleteMaterial({{$material->id}})" data-bs-toggle="modal" data-bs-target="#deleteMaterialModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
+                                                </div>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @empty
                                     <tr>

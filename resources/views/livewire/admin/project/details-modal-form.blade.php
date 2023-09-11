@@ -404,31 +404,25 @@
                             </div>
 
                             @if (!empty($selectedStoreMaterial))
-                                @if($pendingAllocations)
+                                @if($pendingAllocation > 0)
                                     <div class="alert alert-danger" role="alert">
                                         There is a Pending Allocation for this material.
                                     </div>
                                 @else
-                                    @if($totalStoreMaterialQuantity == 0 )
-                                        <div class="alert alert-danger" role="alert">
-                                            Available Quantity: {{ $totalStoreMaterialQuantity }}
-                                        </div>
-                                    @else
-                                        <div class="mb-3">
-                                            <label for="quantity" class="form-label">Quantity in Stock: {{ $totalStoreMaterialQuantity }}</label>
-                                            <input type="number" id="quantity" class="form-control" wire:model.defer="storeQuantity" min="0" max="{{ $totalStoreMaterialQuantity }}" required>
-                                        </div>
+                                    <div class="mb-3">
+                                        <label for="quantity" class="form-label">Quantity in Stock: {{ $totalStoreMaterialQuantity }}</label>
+                                        <input type="number" id="quantity" class="form-control" wire:model.defer="storeQuantity" min="0" max="{{ $totalStoreMaterialQuantity }}" required>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label for="receiver" class="form-label">Receiver</label>
-                                            <input type="text" id="receiver" class="form-control" wire:model.defer="storeReceiver" required>
-                                        </div>
+                                    <div class="mb-3">
+                                        <label for="receiver" class="form-label">Receiver</label>
+                                        <input type="text" id="receiver" class="form-control" wire:model.defer="storeReceiver" required>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label for="purpose" class="form-label">Purpose</label>
-                                            <textarea id="purpose" class="form-control" wire:model.defer="storePurpose" required></textarea>
-                                        </div>
-                                    @endif
+                                    <div class="mb-3">
+                                        <label for="purpose" class="form-label">Purpose</label>
+                                        <textarea id="purpose" class="form-control" wire:model.defer="storePurpose" required></textarea>
+                                    </div>
                                 @endif
                             @endif
 

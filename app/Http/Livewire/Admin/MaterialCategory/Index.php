@@ -6,6 +6,7 @@ use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use App\Models\MaterialCategory;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
@@ -20,6 +21,11 @@ class Index extends Component
         return [
             'category' => 'required|string',
         ];
+    }
+
+    public function mount()
+    {
+        $this->admin = Auth::user();
     }
 
     public function resetInput() {

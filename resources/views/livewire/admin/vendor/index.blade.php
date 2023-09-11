@@ -20,7 +20,9 @@
                             <h5 class="card-title fw-semibold mb-4">Vendor Listing</h5>
                         </div>
                         <div class="ms-auto">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#addVendorModal" class="btn btn-sm btn-primary text-white"><i class="fas fa-plus-square pr-4"></i>&nbsp;&nbsp; Add vendor</a>
+                            @if($admin->isAdmin)
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#addVendorModal" class="btn btn-sm btn-primary text-white"><i class="fas fa-plus-square pr-4"></i>&nbsp;&nbsp; Add vendor</a>
+                            @endif
                         </div>
                     </div>
                     @if (session('message'))
@@ -45,7 +47,9 @@
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Email</th>
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1">Location</th>
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Services</th>
-                                    <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1">Action</th>
+                                    @if($admin->isAdmin)
+                                        <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1">Action</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -63,12 +67,14 @@
                                             @endif
                                         @endforeach
                                     </td>
-                                    <td class="">
-                                        <div class="btn-group" role="group">
-                                            <a href="#" wire:click="editVendor({{$vendor->id}})" data-bs-toggle="modal" data-bs-target="#editVendorModal" class="btn btn-sm btn-warning text-white"><i class="far fa-edit"></i></a>
-                                            <a href="#" wire:click="deleteVendor({{$vendor->id}})" data-bs-toggle="modal" data-bs-target="#deleteVendorModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
-                                        </div>
-                                    </td>
+                                    @if($admin->isAdmin)
+                                        <td class="">
+                                            <div class="btn-group" role="group">
+                                                <a href="#" wire:click="editVendor({{$vendor->id}})" data-bs-toggle="modal" data-bs-target="#editVendorModal" class="btn btn-sm btn-warning text-white"><i class="far fa-edit"></i></a>
+                                                <a href="#" wire:click="deleteVendor({{$vendor->id}})" data-bs-toggle="modal" data-bs-target="#deleteVendorModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
+                                            </div>
+                                        </td>
+                                    @endif
                                 </tr>
                                 @empty
                                     <tr>

@@ -6,6 +6,7 @@ use App\Models\Project;
 use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
@@ -24,6 +25,11 @@ class Index extends Component
             'start_date' => 'required|date',
             'expected_delivery_date' => 'required|date|after:start_date'
         ];
+    }
+
+    public function mount()
+    {
+        $this->admin = Auth::user();
     }
 
     public function resetInput() {
@@ -91,6 +97,51 @@ class Index extends Component
             }
         } catch (\Exception $e) {
             session()->flash('error', 'An error occurred while deleting the project.');
+        }
+
+        $this->dispatchBrowserEvent('close-modal');
+        $this->resetInput();
+    }
+
+    //ACTIVATE PROJECT MODAL
+    public function activateProject($project_id)
+    {
+        $this->project_id = $project_id;
+    }
+
+    //DEACTIVATE PROJECT MODAL
+    public function deactivateProject($project_id)
+    {
+        $this->project_id = $project_id;
+    }
+
+    //ACTIVATE
+    public function startProject()
+    {
+        try {
+            $project = Project::FindOrFail($this->project_id);
+            $project['status'] = 1;
+            $project->update();
+            session()->flash('message', 'Project activated successfully.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'An error occurred while activating the project.');
+        }
+
+        $this->dispatchBrowserEvent('close-modal');
+        $this->resetInput();
+    }
+
+
+    //DEACTIVATE
+    public function stopProject()
+    {
+        try {
+            $project = Project::FindOrFail($this->project_id);
+            $project['status'] = 0;
+            $project->update();
+            session()->flash('message', 'Project deactivated successfully.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'An error occurred while deactivating the project.');
         }
 
         $this->dispatchBrowserEvent('close-modal');

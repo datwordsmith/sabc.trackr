@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Admin\Measure;
 use App\Models\Measure;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
@@ -19,6 +20,11 @@ class Index extends Component
         return [
             'name' => 'required|string',
         ];
+    }
+
+    public function mount()
+    {
+        $this->admin = Auth::user();
     }
 
     public function resetInput() {

@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Admin\UserRole;
 use Livewire\Component;
 use App\Models\UserRole;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
@@ -12,6 +13,13 @@ class Index extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $role_id, $role;
+    public $admin;
+
+
+    public function mount()
+    {
+        $this->admin = Auth::user();
+    }
 
     public function rules()
     {

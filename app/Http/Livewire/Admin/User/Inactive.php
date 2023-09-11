@@ -7,6 +7,7 @@ use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class Inactive extends Component
@@ -32,7 +33,7 @@ class Inactive extends Component
     public function mount(User $user)
     {
         $this->user = $user;
-        //$this->status = $user->status ?? 0;
+        $this->admin = Auth::user();
     }
 
     public function resetInput() {

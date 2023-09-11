@@ -8,6 +8,7 @@ use App\Models\Material;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use App\Models\MaterialCategory;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
@@ -30,6 +31,7 @@ class Index extends Component
     {
         $this->categories = MaterialCategory::all();
         $this->units = Measure::all();
+        $this->admin = Auth::user();
     }
 
     public function resetInput() {

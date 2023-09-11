@@ -27,8 +27,9 @@ class Details extends Component
     protected $paginationTheme = 'bootstrap';
     public $budgetItemsPagination, $allRequisitionsPagination;
 
-    public $projectId, $project, $client, $editClient = false, $userRoles, $projectUsers, $selectedUsers = [], $budgetId, $budgetqty;
+    public $projectId, $project, $client, $editClient = false, $userRoles, $projectUsers, $selectedUsers = [], $budgetId, $budgetqty, $budgetalertqty;
     public $editQtyId = null, $editQty = false;
+    public $editAlertQtyId = null, $editAlertQty = false, $alertQtyError, $extraAlertQtyError;
     public $user;
     public $search, $categories = [], $selectedMaterial, $materials = [], $selectedCategory, $materialsByCategory;
     public $selectedBudgetItem, $budgetItemName, $budgetItemCategory, $budgetItemQuantity, $budgetItemUnit;
@@ -48,7 +49,7 @@ class Details extends Component
 
     public function mount($slug)
     {
-        $this->user = Auth::user();
+        $this->admin = Auth::user();
 
 
         $this->project = Project::where('slug', $slug)->firstOrFail();
@@ -232,11 +233,11 @@ class Details extends Component
             $projectBudget->quantity = 0; // Set the initial quantity value if needed
             $projectBudget->save();
 
-            $totalBudget = new TotalBudget();
+            /* $totalBudget = new TotalBudget();
             $totalBudget->material_id = $this->selectedMaterial;
             $totalBudget->project_id = $this->projectId;
             $totalBudget->quantity = 0; // Set the initial quantity value if needed
-            $totalBudget->save();
+            $totalBudget->save(); */
 
             // Reset the form inputs
             $this->selectedCategory = null;
@@ -260,6 +261,28 @@ class Details extends Component
                 ->update(['isApproved' => 1]);
 
             if ($updated) {
+
+                // Fetch the approved project materials grouped by material_id
+                $approvedMaterials = ProjectBudget::where('project_id', $this->projectId)
+                    ->where('isExtra', 0)
+                    ->where('isApproved', 1)
+                    ->get()
+                    ->groupBy('material_id');
+
+                // Insert the grouped materials into TotalBudget
+                foreach ($approvedMaterials as $materialId => $groupedMaterials) {
+                    $totalQuantity = $groupedMaterials->sum('quantity');
+                    $alertQuantity = $groupedMaterials->sum('alert');
+
+                    TotalBudget::updateOrCreate([
+                        'project_id' => $this->projectId,
+                        'material_id' => $materialId,
+                        ], [
+                        'quantity' => $totalQuantity,
+                        'alert' => $alertQuantity,
+                    ]);
+                }
+
                 $this->dispatchBrowserEvent('close-modal');
                 $this->resetInput();
             }
@@ -277,6 +300,42 @@ class Details extends Component
                 ->update(['isApproved' => 1]);
 
             if ($updated) {
+
+                // Fetch the approved project materials grouped by material_id
+                $approvedMaterials = ProjectBudget::where('project_id', $this->projectId)
+                    ->where('isExtra', 1)
+                    ->where('isApproved', 1)
+                    ->get()
+                    ->groupBy('material_id');
+
+                // Iterate over the grouped materials
+                foreach ($approvedMaterials as $materialId => $groupedMaterials) {
+                    // Calculate the total quantity and alert quantity for the approved materials
+                    $totalQuantity = $groupedMaterials->sum('quantity');
+                    $alertQuantity = $groupedMaterials->sum('alert');
+
+                    // Check if a TotalBudget record already exists for this material and project
+                    $totalBudgetRecord = TotalBudget::where('project_id', $this->projectId)
+                        ->where('material_id', $materialId)
+                        ->first();
+
+                    if ($totalBudgetRecord) {
+                        // Update the existing TotalBudget record
+                        $totalBudgetRecord->update([
+                            'quantity' => $totalBudgetRecord->quantity + $totalQuantity,
+                            'alert' => $totalBudgetRecord->alert + $alertQuantity,
+                        ]);
+                    } else {
+                        // Create a new TotalBudget record if it doesn't exist
+                        TotalBudget::create([
+                            'project_id' => $this->projectId,
+                            'material_id' => $materialId,
+                            'quantity' => $totalQuantity,
+                            'alert' => $alertQuantity,
+                        ]);
+                    }
+                }
+
                 $this->dispatchBrowserEvent('close-modal');
                 $this->resetInput();
             }
@@ -296,9 +355,9 @@ class Details extends Component
         $budgetItem = ProjectBudget::findOrFail($this->budgetId);
 
         // Delete the TotalBudget record
-        TotalBudget::where('project_id', $budgetItem->project_id)
+        /* TotalBudget::where('project_id', $budgetItem->project_id)
             ->where('material_id', $budgetItem->material_id)
-            ->delete();
+            ->delete(); */
 
         // Delete the budget item
         $budgetItem->delete();
@@ -340,11 +399,56 @@ class Details extends Component
             ->sum('quantity');
 
         // Update the total budget
-        TotalBudget::where('project_id', $budgetItem->project_id)
+        /* TotalBudget::where('project_id', $budgetItem->project_id)
             ->where('material_id', $budgetItem->material_id)
-            ->update(['quantity' => $totalQuantity]);
+            ->update(['quantity' => $totalQuantity]); */
 
         $this->editQtyId = null; // Reset the edited budget item ID
+    }
+
+    public function toggleAlertQty($budgetItemId)
+    {
+        $this->editAlertQtyId = $budgetItemId;
+
+        if ($budgetItemId) {
+            $budgetItem = ProjectBudget::findOrFail($budgetItemId);
+            $this->budgetalertqty = $budgetItem->alert;
+        } else {
+            $this->budgetalertqty = '';
+        }
+    }
+
+    public function updateAlertQty($budgetItemId)
+    {
+        $validatedData = $this->validate([
+            'budgetalertqty' => 'required|integer',
+        ]);
+
+        $budgetItem = ProjectBudget::findOrFail($budgetItemId);
+        $budgetItem->alert = $validatedData['budgetalertqty'];
+        if ($budgetItem->alert >= $budgetItem->quantity) {
+            if($budgetItem->isExtra == 0){
+                $this->alertQtyError = 'Alert quantity must be less than budget quantity.';
+            } else {
+                $this->extraAlertQtyError = 'Alert quantity must be less than budget quantity.';
+            }
+        } else {
+            $budgetItem->save();
+            $this->alertQtyError = '';
+            $this->extraAlertQtyError = '';
+
+        }
+
+        $totalAlertQuantity = ProjectBudget::where('material_id', $budgetItem->material_id)
+            ->where('project_id', $budgetItem->project_id)
+            ->sum('alert');
+
+        // Update the total budget
+        /* TotalBudget::where('project_id', $budgetItem->project_id)
+            ->where('material_id', $budgetItem->material_id)
+            ->update(['alert' => $totalAlertQuantity]); */
+
+        $this->editAlertQtyId = null; // Reset the edited budget item ID
     }
     //-- END BUDGET QTY --//
 
@@ -403,12 +507,6 @@ class Details extends Component
             $projectBudget->quantity = 0; // Set the initial quantity value if needed
             $projectBudget->isExtra = 1;
             $projectBudget->save();
-
-            $totalBudget = new TotalBudget();
-            $totalBudget->material_id = $this->selectedMaterial;
-            $totalBudget->project_id = $this->projectId;
-            $totalBudget->quantity = 0; // Set the initial quantity value if needed
-            $totalBudget->save();
 
             // Reset the form inputs
             $this->selectedCategory = null;
@@ -544,11 +642,12 @@ class Details extends Component
 
         // Query the requisitions table to calculate the total quantity from requisitions
         $totalQuantityRequisitions = Requisition::whereHas('budget', function ($query) use ($selectedMaterialId) {
-            $query->where('material_id', $selectedMaterialId);
+            $query->where('material_id', $selectedMaterialId)->where('project_id', $this->projectId);
         })->where('status', 1)->sum('quantity');
 
         // Query the inventory table to calculate the total quantity from inventory
         $totalQuantityInventory = Inventory::where('material_id', $selectedMaterialId)
+                                            ->where('project_id', $this->projectId)
                                             ->where('flow', 1)
                                             ->sum('quantity');
 
@@ -561,16 +660,16 @@ class Details extends Component
 
     public function calculateStoreMaterialQuantity()
     {
-        $selectedMaterialId = $this->selectedStoreMaterial;
+        $selectedStoreMaterialId = $this->selectedStoreMaterial;
 
         // Query the requisitions table to calculate the total quantity from requisitions
-        $totalQuantityInflow = Inventory::where('material_id', $selectedMaterialId)
+        $totalQuantityInflow = Inventory::where('material_id', $selectedStoreMaterialId)
                                 ->where('project_id', $this->projectId)
                                 ->where('flow', 1)
                                 ->sum('quantity');
 
         // Query the inventory table to calculate the total quantity from inventory
-        $totalQuantityOut = Allocation::where('material_id', $selectedMaterialId)
+        $totalQuantityOut = Allocation::where('material_id', $selectedStoreMaterialId)
                                         ->where('project_id', $this->projectId)
                                         ->where('flow', 1)
                                         ->sum('quantity');
@@ -578,20 +677,23 @@ class Details extends Component
         // Calculate the difference between the two quantities
         $totalStoreQuantity = $totalQuantityInflow - $totalQuantityOut;
 
+        // Check for pending allocations
+        $this->pendingAllocation = $this->checkExistingAllocation();
+
+        // If no pending allocations, return the calculated quantity
         return $totalStoreQuantity;
     }
 
 
     public function checkExistingAllocation()
     {
-        $selectedMaterialId = $this->selectedStoreMaterial;
+        $selectedStoreMaterialId = $this->selectedStoreMaterial;
 
         // Query to check that selected material is pending in the Allocation Model
-        $pendingAllocation = Allocation::where('material_id', $selectedMaterialId)
+        $pendingAllocation = Allocation::where('material_id', $selectedStoreMaterialId)
                                         ->where('project_id', $this->projectId)
                                         ->where('flow', 0)
-                                        ->get();
-
+                                        ->count();
         return $pendingAllocation;
     }
     //-- END INVENTORY ITEMS --//
@@ -778,18 +880,19 @@ class Details extends Component
 
     public function projectStore()
     {
+
         $query = Inventory::with(['material.category', 'material.unit'])
             ->selectRaw('
                 material_id,
                 SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) AS inflowSum,
-                (SELECT SUM(quantity) FROM total_budgets WHERE material_id = inventory.material_id) AS totalBudgetQuantity,
+                (SELECT SUM(quantity) FROM total_budgets WHERE material_id = inventory.material_id AND project_id = inventory.project_id) AS totalBudgetQuantity,
                 (SELECT SUM(r.quantity) FROM requisitions r
                     INNER JOIN total_budgets tb ON r.budget_id = tb.id
-                    WHERE tb.material_id = inventory.material_id AND r.status = 1) AS requisitionSum,
-                (SELECT SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) FROM allocations WHERE material_id = inventory.material_id) AS outgoingSum
+                    WHERE tb.material_id = inventory.material_id AND r.status = 1 AND project_id = inventory.project_id) AS requisitionSum,
+                (SELECT SUM(CASE WHEN flow = 1 THEN quantity ELSE 0 END) FROM allocations WHERE material_id = inventory.material_id AND project_id = inventory.project_id) AS outgoingSum
             ')
             ->where('project_id', $this->projectId)
-            ->groupBy('material_id');
+            ->groupBy('material_id', 'project_id');
 
         if ($this->storeSearch) {
             $query->whereHas('material.category', function ($q) {
@@ -813,11 +916,12 @@ class Details extends Component
             $budgetBalance = $storeItem->totalBudgetQuantity - $storeItem->requisitionSum;
             $storeItem->budgetBalance = $budgetBalance;
         }
+
     }
 
     public function userCredentials()
     {
-        $currentUserId = $this->user->id;
+        $currentUserId = $this->admin->id;
         $projectId = $this->projectId;
         $query = ProjectUser::join('user_roles', 'project_user.role_id', '=', 'user_roles.id')
                         ->where('user_id', $currentUserId)
@@ -972,7 +1076,7 @@ class Details extends Component
         $outgoingsSum = $this->calculateOutgoingsSum();
         $storeBalance = $inflowSum - $outgoingsSum;
 
-        $this->pendingAllocation = $this->checkExistingAllocation();
+
 
         return view('livewire.admin.project.details', [
             'users' => $users,
@@ -995,6 +1099,8 @@ class Details extends Component
             'storeBalance' => $storeBalance,
             'storeItems' => $this->storeItems,
             'pendingAllocations' => $this->pendingAllocation,
+            'alertQtyError' => $this->alertQtyError,
+            'extraAlertQtyError' => $this->extraAlertQtyError,
         ])->extends('layouts.admin')->section('content');
     }
 

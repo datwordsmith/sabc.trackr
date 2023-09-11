@@ -20,10 +20,10 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+//Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::prefix('t')->middleware(['auth', 'isAdmin'])->group(function (){
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('t.dashboard');
+    //Route::get('/dashboard', [DashboardController::class, 'index'])->name('t.dashboard');
     Route::get('/projects', App\Http\Livewire\Admin\Project\Index::class);
     Route::get('/user_roles', App\Http\Livewire\Admin\UserRole\Index::class);
 
