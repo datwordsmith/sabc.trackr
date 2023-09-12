@@ -7,6 +7,7 @@ use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class Active extends Component
@@ -15,7 +16,7 @@ class Active extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $user_id, $name, $email, $password, $confirm_password, $status = 1;
-    public $search;
+    public $search, $admin;
 
     public function rules()
     {
@@ -32,7 +33,7 @@ class Active extends Component
     public function mount(User $user)
     {
         $this->user = $user;
-        //$this->status = $user->status ?? 0;
+        $this->admin = Auth::user();
     }
 
     public function resetInput() {

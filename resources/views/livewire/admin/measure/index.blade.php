@@ -18,18 +18,24 @@
                     Add New
                   </div>
                 <div class="card-body p-4">
-                    <form wire:submit.prevent="storeUnit()">
-                        <div class="mb-3">
+                    @if($admin->isAdmin)
+                        <form wire:submit.prevent="storeUnit()">
+                            <div class="mb-3">
 
-                            <input type="text" class="form-control" placeholder = "New Unit" wire:model.defer="name">
-                            @error('name')
-                                <small class="error text-danger">{{ $message }}</small>
-                            @enderror
+                                <input type="text" class="form-control" placeholder = "New Unit" wire:model.defer="name">
+                                @error('name')
+                                    <small class="error text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                            </div>
+                        </form>
+                    @else
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i> You are not allowed to add New items. Please contact Administrator.
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Save</button>
-                        </div>
-                    </form>
+                    @endif
                 </div>
             </div>
 
@@ -57,19 +63,23 @@
                             <thead class="table-dark">
                                 <tr class="">
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-10">Measure/Unit</th>
-                                    <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Action</th>
+                                    @if($admin->isAdmin)
+                                        <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Action</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($units as $index => $unit)
                                     <tr>
                                         <td>{{$unit->name}}</td>
-                                        <td class="">
-                                            <div class="btn-group" role="group" aria-label="">
-                                                <a href="#" wire:click="editUnit({{$unit->id}})" data-bs-toggle="modal" data-bs-target="#editUnitModal" class="btn btn-sm btn-warning text-white"><i class="fas fa-pen"></i></a>
-                                                <a href="#" wire:click="deleteUnit({{$unit->id}})" data-bs-toggle="modal" data-bs-target="#deleteUnitModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
-                                            </div>
-                                        </td>
+                                        @if($admin->isAdmin)
+                                            <td class="">
+                                                <div class="btn-group" role="group" aria-label="">
+                                                    <a href="#" wire:click="editUnit({{$unit->id}})" data-bs-toggle="modal" data-bs-target="#editUnitModal" class="btn btn-sm btn-warning text-white"><i class="fas fa-pen"></i></a>
+                                                    <a href="#" wire:click="deleteUnit({{$unit->id}})" data-bs-toggle="modal" data-bs-target="#deleteUnitModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
+                                                </div>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @empty
                                     <tr>

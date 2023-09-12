@@ -21,7 +21,9 @@
                             <h5 class="card-title fw-semibold mb-4">Project Listing</h5>
                         </div>
                         <div class="ms-auto">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#addProjectModal" class="btn btn-sm btn-primary text-white"><i class="fas fa-plus-square pr-4"></i>&nbsp;&nbsp; Add Project</a>
+                            @if($admin->isAdmin)
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#addProjectModal" class="btn btn-sm btn-primary text-white"><i class="fas fa-plus-square pr-4"></i>&nbsp;&nbsp; Add Project</a>
+                            @endif
                         </div>
                     </div>
                     @if (session('message'))
@@ -46,7 +48,9 @@
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Start Date</th>
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-2">Expected Delivery</th>
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1 text-center">Status</th>
-                                    <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1">Action</th>
+                                    @if($admin->isAdmin)
+                                        <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1">Action</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -63,13 +67,20 @@
                                             <i class="fas fa-ban text-danger"></i>
                                         @endif
                                     </td>
-                                    <td class="">
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ url('t/project/'.$project->slug) }}" class="btn btn-sm btn-primary text-white"><i class="far fa-eye"></i></a>
-                                            <a href="#" wire:click="editProject({{$project->id}})" data-bs-toggle="modal" data-bs-target="#editProjectModal" class="btn btn-sm btn-warning text-white"><i class="far fa-edit"></i></a>
-                                            <a href="#" wire:click="deleteProject({{$project->id}})" data-bs-toggle="modal" data-bs-target="#deleteProjectModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
-                                        </div>
-                                    </td>
+                                    @if($admin->isAdmin)
+                                        <td class="text-end">
+                                            <div class="btn-group" role="group">
+                                                @if($project->status == '1')
+                                                    <a href="#" wire:click="deactivateProject({{$project->id}})" data-bs-toggle="modal" data-bs-target="#deactivateProjectModal" class="btn btn-sm btn-dark text-white">Deactivate</a>
+                                                @else
+                                                    <a href="#" wire:click="activateProject({{$project->id}})" data-bs-toggle="modal" data-bs-target="#activateProjectModal" class="btn btn-sm btn-success text-white">activate</a>
+                                                @endif
+                                                <a href="{{ url('t/project/'.$project->slug) }}" class="btn btn-sm btn-primary text-white"><i class="far fa-eye"></i></a>
+                                                <a href="#" wire:click="editProject({{$project->id}})" data-bs-toggle="modal" data-bs-target="#editProjectModal" class="btn btn-sm btn-warning text-white"><i class="far fa-edit"></i></a>
+                                                <a href="#" wire:click="deleteProject({{$project->id}})" data-bs-toggle="modal" data-bs-target="#deleteProjectModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
+                                            </div>
+                                        </td>
+                                    @endif
                                 </tr>
                                 @empty
                                     <tr>
@@ -96,6 +107,8 @@
             $('#addProjectModal').modal('hide');
             $('#editProjectModal').modal('hide');
             $('#deleteProjectModal').modal('hide');
+            $('#activateProjectModal').modal('hide');
+            $('#deactivateProjectModal').modal('hide');
         })
     </script>
 @endsection

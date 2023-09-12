@@ -7,6 +7,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\VendorService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
@@ -29,6 +30,7 @@ class Index extends Component
     public function mount(Vendor $vendor)
     {
         $this->vendor = $vendor;
+        $this->admin = Auth::user();
     }
 
     public function resetInput() {

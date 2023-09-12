@@ -17,6 +17,7 @@ class ProjectBudget extends Model
         'quantity',
         'isApproved',
         'isExtra',
+        'alert',
     ];
 
     public function material()

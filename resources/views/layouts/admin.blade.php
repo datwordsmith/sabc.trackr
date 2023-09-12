@@ -14,6 +14,7 @@
 
     <link rel="shortcut icon" type="image/png" href="{{ asset('assets/trackr_favicon.png') }}" />
     <link rel="stylesheet" href="{{ asset('admin/assets/css/styles.min.css') }}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.min.css">
     @livewireStyles
 </head>
 <body>
@@ -52,6 +53,9 @@
     <script src="{{ asset('admin/assets/js/sidebarmenu.js') }}"></script>
     <script src="{{ asset('admin/assets/js/app.min.js') }}"></script>
     <script src="{{ asset('admin/assets/libs/simplebar/dist/simplebar.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.min.js"></script>
+
+
 
     @livewireScripts
     @yield('scripts')

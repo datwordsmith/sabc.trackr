@@ -14,6 +14,7 @@ class TotalBudget extends Model
         'material_id',
         'project_id',
         'quantity',
+        'alert',
     ];
 
     public function material()
