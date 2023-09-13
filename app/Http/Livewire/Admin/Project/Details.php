@@ -40,7 +40,9 @@ class Details extends Component
     public $totalStoreMaterialQuantity, $selectedStoreCategory, $selectedStoreMaterial;
     public $storeReceiver, $storeQuantity, $storePurpose, $allocationId, $pendingAllocation;
     protected $budgetItems, $allRequisitions, $extraBudgetItems, $allBudgetItems, $storeItems;
-    public $userCredentials, $currentUserRole;
+    public $userCredentials, $currentUserRole, $staffRole;
+    public $projectManager, $materialManager, $quantitySurveyor, $inventoryManager, $procurementOfficer, $budgetOfficer;
+    public $superAdmin;
 
 
     protected $rules = [
@@ -50,7 +52,9 @@ class Details extends Component
     public function mount($slug)
     {
         $this->admin = Auth::user();
-
+        if($this->admin->isAdmin){
+            $this->superAdmin = true;
+        }
 
         $this->project = Project::where('slug', $slug)->firstOrFail();
         $this->projectId = $this->project->id;
@@ -927,7 +931,33 @@ class Details extends Component
                         ->where('user_id', $currentUserId)
                         ->where('project_id', $projectId);
 
-        $this->currentUserRole = $query->first(); // Set the property
+        $currentUserRole = $query->first(); // Set the property
+
+        if ($currentUserRole) {
+            $this->staffRole = $currentUserRole->role;
+
+            if(($this->staffRole) || ($this->admin->isAdmin))
+                switch($this->staffRole) {
+                    case "Project Manager" :
+                        $this->projectManager = true;
+                        break;
+                    case "Material Manager":
+                        $this->materialManager = true;
+                        break;
+                    case "Quantity Surveyor":
+                        $this->quantitySurveyor = true;
+                        break;
+                    case "Inventory Manager":
+                        $this->inventoryManager = true;
+                        break;
+                    case "Procurement Officer":
+                        $this->procurementOfficer = true;
+                        break;
+                    case "Budget Officer":
+                        $this->budgetOfficer = true;
+                        break;
+                }
+        }
     }
 
     public function render()

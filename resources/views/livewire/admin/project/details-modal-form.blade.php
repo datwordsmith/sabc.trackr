@@ -308,56 +308,62 @@
                         </div>
                     </div>
                     <div wire:loading.remove class="">
-                        <form wire:submit.prevent="addInventory()">
-                            <div class="mb-3">
-                                <select wire:model="selectedInventoryCategory" class="form-select" required wire:change="resetMaterialFields">
-                                    <option value="">Select a category</option>
-                                    @foreach ($inventoryCategories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->category }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <select wire:model="selectedInventoryMaterial" class="form-control"
-                                    @if (empty($selectedInventoryCategory)) disabled @endif required wire:change="updateTotalMaterialQuantity">
-                                    <option value="">Select a material</option>
-                                    @foreach ($inventoryMaterials as $material)
-                                        @if ($material->category_id == $selectedInventoryCategory)
-                                            <option value="{{ $material->id }}">{{ $material->name }}</option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                            </div>
+                        @if(($materialManager) || ($superAdmin))
+                            <form wire:submit.prevent="addInventory()">
+                                <div class="mb-3">
+                                    <select wire:model="selectedInventoryCategory" class="form-select" required wire:change="resetMaterialFields">
+                                        <option value="">Select a category</option>
+                                        @foreach ($inventoryCategories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <select wire:model="selectedInventoryMaterial" class="form-control"
+                                        @if (empty($selectedInventoryCategory)) disabled @endif required wire:change="updateTotalMaterialQuantity">
+                                        <option value="">Select a material</option>
+                                        @foreach ($inventoryMaterials as $material)
+                                            @if ($material->category_id == $selectedInventoryCategory)
+                                                <option value="{{ $material->id }}">{{ $material->name }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            @if (!empty($selectedInventoryMaterial))
-                                @if($totalMaterialQuantity == 0 )
-                                    <div class="alert alert-danger" role="alert">
-                                        Available Quantity: {{ $totalMaterialQuantity }}
-                                    </div>
-                                @else
-                                    <div class="mb-3">
-                                        <label for="quantity" class="form-label">Available Quantity: {{ $totalMaterialQuantity }}</label>
-                                        <input type="number" id="quantity" class="form-control" wire:model.defer="inventoryQuantity" min="0" max="{{ $totalMaterialQuantity }}" required>
-                                    </div>
+                                @if (!empty($selectedInventoryMaterial))
+                                    @if($totalMaterialQuantity == 0 )
+                                        <div class="alert alert-danger" role="alert">
+                                            Available Quantity: {{ $totalMaterialQuantity }}
+                                        </div>
+                                    @else
+                                        <div class="mb-3">
+                                            <label for="quantity" class="form-label">Available Quantity: {{ $totalMaterialQuantity }}</label>
+                                            <input type="number" id="quantity" class="form-control" wire:model.defer="inventoryQuantity" min="0" max="{{ $totalMaterialQuantity }}" required>
+                                        </div>
 
-                                    <div class="mb-3">
-                                        <label for="receiver" class="form-label">Receiver</label>
-                                        <input type="text" id="receiver" class="form-control" wire:model.defer="inventoryReceiver" required>
-                                    </div>
+                                        <div class="mb-3">
+                                            <label for="receiver" class="form-label">Receiver</label>
+                                            <input type="text" id="receiver" class="form-control" wire:model.defer="inventoryReceiver" required>
+                                        </div>
 
-                                    <div class="mb-3">
-                                        <label for="purpose" class="form-label">Purpose</label>
-                                        <textarea id="purpose" class="form-control" wire:model.defer="inventoryPurpose" required></textarea>
+                                        <div class="mb-3">
+                                            <label for="purpose" class="form-label">Purpose</label>
+                                            <textarea id="purpose" class="form-control" wire:model.defer="inventoryPurpose" required></textarea>
+                                        </div>
+                                    @endif
+                                @endif
+
+                                @if($totalMaterialQuantity > 0 )
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary btn-lg">Save</button>
                                     </div>
                                 @endif
-                            @endif
-
-                            @if($totalMaterialQuantity > 0 )
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary btn-lg">Save</button>
-                                </div>
-                            @endif
-                        </form>
+                            </form>
+                        @else
+                            <div class="alert alert-danger">
+                                Please contact the Material Manager
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -382,62 +388,68 @@
                         </div>
                     </div>
                     <div wire:loading.remove class="">
-                        <form wire:submit.prevent="removeInventory()">
-                            <div class="mb-3">
-                                <select wire:model="selectedStoreCategory" class="form-select" required wire:change="resetMaterialOutFields">
-                                    <option value="">Select a category</option>
-                                    @foreach ($storeCategories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->category }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <select wire:model="selectedStoreMaterial" class="form-control"
-                                    @if (empty($selectedStoreCategory)) disabled @endif required wire:change="updateStoreMaterialQuantity">
-                                    <option value="">Select a material</option>
-                                    @foreach ($storeMaterials as $material)
-                                        @if ($material->category_id == $selectedStoreCategory)
-                                            <option value="{{ $material->id }}">{{ $material->name }}</option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                            </div>
+                        @if(($projectManager) || ($superAdmin))
+                            <form wire:submit.prevent="removeInventory()">
+                                <div class="mb-3">
+                                    <select wire:model="selectedStoreCategory" class="form-select" required wire:change="resetMaterialOutFields">
+                                        <option value="">Select a category</option>
+                                        @foreach ($storeCategories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <select wire:model="selectedStoreMaterial" class="form-control"
+                                        @if (empty($selectedStoreCategory)) disabled @endif required wire:change="updateStoreMaterialQuantity">
+                                        <option value="">Select a material</option>
+                                        @foreach ($storeMaterials as $material)
+                                            @if ($material->category_id == $selectedStoreCategory)
+                                                <option value="{{ $material->id }}">{{ $material->name }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            @if (!empty($selectedStoreMaterial))
-                                @if($pendingAllocation > 0)
-                                    <div class="alert alert-danger" role="alert">
-                                        There is a Pending Allocation for this material.
-                                    </div>
+                                @if (!empty($selectedStoreMaterial))
+                                    @if($pendingAllocation > 0)
+                                        <div class="alert alert-danger" role="alert">
+                                            There is a Pending Allocation for this material.
+                                        </div>
+                                    @else
+                                        <div class="mb-3">
+                                            <label for="quantity" class="form-label">Quantity in Stock: {{ $totalStoreMaterialQuantity }}</label>
+                                            <input type="number" id="quantity" class="form-control" wire:model.defer="storeQuantity" min="0" max="{{ $totalStoreMaterialQuantity }}" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="receiver" class="form-label">Receiver</label>
+                                            <input type="text" id="receiver" class="form-control" wire:model.defer="storeReceiver" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="purpose" class="form-label">Purpose</label>
+                                            <textarea id="purpose" class="form-control" wire:model.defer="storePurpose" required></textarea>
+                                        </div>
+                                    @endif
+                                @endif
+
+
+
+                                @if($pendingAllocations)
+
                                 @else
-                                    <div class="mb-3">
-                                        <label for="quantity" class="form-label">Quantity in Stock: {{ $totalStoreMaterialQuantity }}</label>
-                                        <input type="number" id="quantity" class="form-control" wire:model.defer="storeQuantity" min="0" max="{{ $totalStoreMaterialQuantity }}" required>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="receiver" class="form-label">Receiver</label>
-                                        <input type="text" id="receiver" class="form-control" wire:model.defer="storeReceiver" required>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="purpose" class="form-label">Purpose</label>
-                                        <textarea id="purpose" class="form-control" wire:model.defer="storePurpose" required></textarea>
-                                    </div>
+                                    @if($totalStoreMaterialQuantity > 0 )
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                        </div>
+                                    @endif
                                 @endif
-                            @endif
-
-
-
-                            @if($pendingAllocations)
-
-                            @else
-                                @if($totalStoreMaterialQuantity > 0 )
-                                    <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary btn-lg">Save</button>
-                                    </div>
-                                @endif
-                            @endif
-                        </form>
+                            </form>
+                        @else
+                            <div class="alert alert-danger">
+                                Please contact the Project Manager
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

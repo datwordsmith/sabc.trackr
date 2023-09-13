@@ -43,7 +43,7 @@
                         <h6 class="fw-semibold mb-1">Client</h6>
                         @if (!$editClient)
                             <span class="fw-normal">{{ $project->client }}</span>
-                            @if($admin->isAdmin)
+                            @if($superAdmin)
                                 <button class="btn btn-sm btn-warning ms-2" wire:click="toggleClient"><i
                                     class="fas fa-pencil-alt"></i></button>
                             @endif
@@ -85,7 +85,7 @@
                             <h5 class="card-title fw-semibold pb-2">Project Team</h5>
                         </div>
                         <div class="ms-auto">
-                            @if($admin->isAdmin)
+                            @if($superAdmin)
                                 <a href="#" data-bs-toggle="modal" data-bs-target="#assignTeamModal"
                                     class="btn btn-sm btn-primary text-white"><i class="fas fa-users-cog"></i> Project
                                     Team</a>
@@ -132,10 +132,12 @@
                             </div>
                             <div class="ms-auto">
                                 @if ($budgetItems->where('isApproved', 0)->count() > 0 && $budgetItems->where('quantity', '<', 1)->count() == 0 && $budgetItems->where('alert', '=', 0)->count() == 0)
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#approveBudgetModal"
-                                        class="btn btn-sm btn-success text-white me-2">
-                                        <i class="fas fa-check-double"></i> Approve Budget
-                                    </a>
+                                    @if (($budgetOfficer) || ($superAdmin))
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#approveBudgetModal"
+                                            class="btn btn-sm btn-success text-white me-2">
+                                            <i class="fas fa-check-double"></i> Approve Budget
+                                        </a>
+                                    @endif
                                 @endif
                                 @if ($budgetItems->count() > 0)
                                     <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('primary_budget')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
@@ -151,8 +153,6 @@
                                             </div>
                                         @endif
                                         @if ($project && $project->status == 1)
-                                            {{-- @if ($budgetItems->count() > 0)
-                                                @if ($budgetItems->where('isApproved', 0)->count() == 0) --}}
                                                 @if ($budgetItems->count() > 0 && $budgetItems->where('isApproved', 0)->count() == 0)
                                                     <div class="mt-3 text-center">
                                                         <p >
@@ -184,33 +184,39 @@
                                                                     {{ session('budgeterror') }}
                                                                 </div>
                                                             @endif
-                                                            <form wire:submit.prevent="saveBudget()">
-                                                                <div class="mb-3">
-                                                                    <select wire:model="selectedCategory" class="form-select" required>
-                                                                        <option value="">Select a category</option>
-                                                                        @foreach ($categories as $category)
-                                                                            <option value="{{ $category->id }}">{{ $category->category }}</option>
-                                                                        @endforeach
-                                                                    </select>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <select wire:model="selectedMaterial" class="form-control"
-                                                                        @if (empty($selectedCategory)) disabled @endif required>
-                                                                        <option value="">Select a material</option>
-                                                                        @if (!empty($materials))
-                                                                            @foreach ($materials as $material)
-                                                                                @if ($material->category_id == $selectedCategory)
-                                                                                    <option value="{{ $material->id }}">{{ $material->name }}</option>
-                                                                                @endif
+                                                            @if(($quantitySurveyor) || ($superAdmin))
+                                                                <form wire:submit.prevent="saveBudget()">
+                                                                    <div class="mb-3">
+                                                                        <select wire:model="selectedCategory" class="form-select" required>
+                                                                            <option value="">Select a category</option>
+                                                                            @foreach ($categories as $category)
+                                                                                <option value="{{ $category->id }}">{{ $category->category }}</option>
                                                                             @endforeach
-                                                                        @endif
-                                                                    </select>
-                                                                </div>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <select wire:model="selectedMaterial" class="form-control"
+                                                                            @if (empty($selectedCategory)) disabled @endif required>
+                                                                            <option value="">Select a material</option>
+                                                                            @if (!empty($materials))
+                                                                                @foreach ($materials as $material)
+                                                                                    @if ($material->category_id == $selectedCategory)
+                                                                                        <option value="{{ $material->id }}">{{ $material->name }}</option>
+                                                                                    @endif
+                                                                                @endforeach
+                                                                            @endif
+                                                                        </select>
+                                                                    </div>
 
-                                                                <div class="d-grid">
-                                                                    <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                                                    <div class="d-grid">
+                                                                        <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                                                    </div>
+                                                                </form>
+                                                            @else
+                                                                <div class="alert alert-warning">
+                                                                    Please contact the Quantity Surveyor
                                                                 </div>
-                                                            </form>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 @endif
@@ -268,50 +274,54 @@
                                                                 <td>{{ $budgetItem->material->unit->name }}</td>
                                                                 <td>
                                                                     @if ($editQtyId !== $budgetItem->id)
-                                                                        @if (!$budgetItem->isApproved)
+                                                                        @if ((!$budgetItem->isApproved) && ($quantitySurveyor))
                                                                             <button class="btn btn-sm btn-warning ms-2"
                                                                                 wire:click="toggleQty({{ $budgetItem->id }})"><i
                                                                                     class="fas fa-pencil-alt"></i></button>
                                                                         @endif
                                                                         <span class="fw-normal">{{ $budgetItem->quantity }}</span>
                                                                     @else
-                                                                        <div class="input-group">
-                                                                            <input type="number"
-                                                                                class="form-control form-control-sm d-inline-block w-auto-fit"
-                                                                                wire:model.defer="budgetqty"
-                                                                                wire:keydown.enter.prevent="updateQty({{ $budgetItem->id }})"
-                                                                                wire:keydown.escape="toggleQty" min=0>
-                                                                            <button class="btn btn-sm btn-primary ms-2"
-                                                                                wire:click="updateQty({{ $budgetItem->id }})"><i
-                                                                                    class="fas fa-save"></i></button>
-                                                                            <button class="btn btn-sm btn-danger"
-                                                                                wire:click="toggleQty(null)"><i
-                                                                                    class="fas fa-times"></i></button>
-                                                                        </div>
+                                                                        @if(($quantitySurveyor) || ($superAdmin))
+                                                                            <div class="input-group">
+                                                                                <input type="number"
+                                                                                    class="form-control form-control-sm d-inline-block w-auto-fit"
+                                                                                    wire:model.defer="budgetqty"
+                                                                                    wire:keydown.enter.prevent="updateQty({{ $budgetItem->id }})"
+                                                                                    wire:keydown.escape="toggleQty" min=0>
+                                                                                <button class="btn btn-sm btn-primary ms-2"
+                                                                                    wire:click="updateQty({{ $budgetItem->id }})"><i
+                                                                                        class="fas fa-save"></i></button>
+                                                                                <button class="btn btn-sm btn-danger"
+                                                                                    wire:click="toggleQty(null)"><i
+                                                                                        class="fas fa-times"></i></button>
+                                                                            </div>
+                                                                        @endif
                                                                     @endif
                                                                 </td>
                                                                 <td>
                                                                     @if ($editAlertQtyId !== $budgetItem->id)
-                                                                        @if (!$budgetItem->isApproved)
+                                                                        @if ((!$budgetItem->isApproved) && (($quantitySurveyor)  || ($superAdmin)))
                                                                             <button class="btn btn-sm btn-warning ms-2"
                                                                                 wire:click="toggleAlertQty({{ $budgetItem->id }})"><i
                                                                                     class="fas fa-pencil-alt"></i></button>
                                                                         @endif
                                                                         <span class="fw-normal">{{ $budgetItem->alert }}</span>
                                                                     @else
-                                                                        <div class="input-group">
-                                                                            <input type="number"
-                                                                                class="form-control form-control-sm d-inline-block w-auto-fit"
-                                                                                wire:model.defer="budgetalertqty"
-                                                                                wire:keydown.enter.prevent="updateAlertQty({{ $budgetItem->id }})"
-                                                                                wire:keydown.escape="toggleAlertQty" min=0>
-                                                                            <button class="btn btn-sm btn-primary ms-2"
-                                                                                wire:click="updateAlertQty({{ $budgetItem->id }})"><i
-                                                                                    class="fas fa-save"></i></button>
-                                                                            <button class="btn btn-sm btn-danger"
-                                                                                wire:click="toggleAlertQty(null)"><i
-                                                                                    class="fas fa-times"></i></button>
-                                                                        </div>
+                                                                        @if(($quantitySurveyor) || ($superAdmin))
+                                                                            <div class="input-group">
+                                                                                <input type="number"
+                                                                                    class="form-control form-control-sm d-inline-block w-auto-fit"
+                                                                                    wire:model.defer="budgetalertqty"
+                                                                                    wire:keydown.enter.prevent="updateAlertQty({{ $budgetItem->id }})"
+                                                                                    wire:keydown.escape="toggleAlertQty" min=0>
+                                                                                <button class="btn btn-sm btn-primary ms-2"
+                                                                                    wire:click="updateAlertQty({{ $budgetItem->id }})"><i
+                                                                                        class="fas fa-save"></i></button>
+                                                                                <button class="btn btn-sm btn-danger"
+                                                                                    wire:click="toggleAlertQty(null)"><i
+                                                                                        class="fas fa-times"></i></button>
+                                                                            </div>
+                                                                        @endif
                                                                     @endif
                                                                 </td>
                                                                 <td>
@@ -323,11 +333,13 @@
                                                                                     data-bs-toggle="modal" data-bs-target="#requisitionModal"
                                                                                     class="btn btn-sm btn-success text-white"> Request</a> --}}
                                                                         @else
-                                                                        <a href="#"
-                                                                            wire:click="deleteBudget({{ $budgetItem->id }})"
-                                                                            data-bs-toggle="modal" data-bs-target="#deleteBudgetModal"
-                                                                            class="btn btn-sm btn-danger text-white"><i
-                                                                                class="fas fa-trash-alt"></i></a>
+                                                                            @if(($quantitySurveyor) || ($superAdmin))
+                                                                                <a href="#"
+                                                                                    wire:click="deleteBudget({{ $budgetItem->id }})"
+                                                                                    data-bs-toggle="modal" data-bs-target="#deleteBudgetModal"
+                                                                                    class="btn btn-sm btn-danger text-white"><i
+                                                                                        class="fas fa-trash-alt"></i></a>
+                                                                            @endif
                                                                         @endif
                                                                     </div>
                                                                 </td>
@@ -362,10 +374,12 @@
                             </div>
                             <div class="ms-auto">
                                 @if ($extraBudgetItems->where('isApproved', 0)->count() > 0 && $extraBudgetItems->where('quantity', '<', 1)->count() == 0 && $extraBudgetItems->where('alert', '=', 0)->count() == 0)
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#approveExtraBudgetModal"
-                                        class="btn btn-sm btn-success text-white me-2">
-                                        <i class="fas fa-check-double"></i> Approve Budget
-                                    </a>
+                                    @if(($budgetOfficer) || ($superAdmin))
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#approveExtraBudgetModal"
+                                            class="btn btn-sm btn-success text-white me-2">
+                                            <i class="fas fa-check-double"></i> Approve Budget
+                                        </a>
+                                    @endif
                                 @endif
                                 @if ($extraBudgetItems->count() > 0)
                                     <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('supplementary_budget')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
@@ -394,33 +408,39 @@
                                                             {{ session('extrabudgeterror') }}
                                                         </div>
                                                     @endif
-                                                    <form wire:submit.prevent="saveExtraBudget()">
-                                                        <div class="mb-3">
-                                                            <select wire:model="selectedCategory" class="form-select" required>
-                                                                <option value="">Select a category</option>
-                                                                @foreach ($categories as $category)
-                                                                    <option value="{{ $category->id }}">{{ $category->category }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <select wire:model="selectedMaterial" class="form-control"
-                                                                @if (empty($selectedCategory)) disabled @endif required>
-                                                                <option value="">Select a material</option>
-                                                                @if (!empty($materials))
-                                                                    @foreach ($materials as $material)
-                                                                        @if ($material->category_id == $selectedCategory)
-                                                                            <option value="{{ $material->id }}">{{ $material->name }}</option>
-                                                                        @endif
+                                                    @if(($quantitySurveyor) || ($superAdmin))
+                                                        <form wire:submit.prevent="saveExtraBudget()">
+                                                            <div class="mb-3">
+                                                                <select wire:model="selectedCategory" class="form-select" required>
+                                                                    <option value="">Select a category</option>
+                                                                    @foreach ($categories as $category)
+                                                                        <option value="{{ $category->id }}">{{ $category->category }}</option>
                                                                     @endforeach
-                                                                @endif
-                                                            </select>
-                                                        </div>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <select wire:model="selectedMaterial" class="form-control"
+                                                                    @if (empty($selectedCategory)) disabled @endif required>
+                                                                    <option value="">Select a material</option>
+                                                                    @if (!empty($materials))
+                                                                        @foreach ($materials as $material)
+                                                                            @if ($material->category_id == $selectedCategory)
+                                                                                <option value="{{ $material->id }}">{{ $material->name }}</option>
+                                                                            @endif
+                                                                        @endforeach
+                                                                    @endif
+                                                                </select>
+                                                            </div>
 
-                                                        <div class="d-grid">
-                                                            <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                                            <div class="d-grid">
+                                                                <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                                            </div>
+                                                        </form>
+                                                    @else
+                                                        <div class="alert alert-warning">
+                                                            Please contact the Quantity Surveyor
                                                         </div>
-                                                    </form>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @endif
@@ -478,50 +498,54 @@
                                                                 <td>{{ $budgetItem->material->unit->name }}</td>
                                                                 <td>
                                                                     @if ($editQtyId !== $budgetItem->id)
-                                                                        @if (!$budgetItem->isApproved)
+                                                                        @if ((!$budgetItem->isApproved) && ($quantitySurveyor))
                                                                             <button class="btn btn-sm btn-warning ms-2"
                                                                                 wire:click="toggleQty({{ $budgetItem->id }})"><i
                                                                                     class="fas fa-pencil-alt"></i></button>
                                                                         @endif
                                                                         <span class="fw-normal">{{ $budgetItem->quantity }}</span>
                                                                     @else
-                                                                        <div class="input-group">
-                                                                            <input type="number"
-                                                                                class="form-control form-control-sm d-inline-block w-auto-fit"
-                                                                                wire:model.defer="budgetqty"
-                                                                                wire:keydown.enter.prevent="updateQty({{ $budgetItem->id }})"
-                                                                                wire:keydown.escape="toggleQty" min=0>
-                                                                            <button class="btn btn-sm btn-primary ms-2"
-                                                                                wire:click="updateQty({{ $budgetItem->id }})"><i
-                                                                                    class="fas fa-save"></i></button>
-                                                                            <button class="btn btn-sm btn-danger"
-                                                                                wire:click="toggleQty(null)"><i
-                                                                                    class="fas fa-times"></i></button>
-                                                                        </div>
+                                                                        @if(($quantitySurveyor) || ($superAdmin))
+                                                                            <div class="input-group">
+                                                                                <input type="number"
+                                                                                    class="form-control form-control-sm d-inline-block w-auto-fit"
+                                                                                    wire:model.defer="budgetqty"
+                                                                                    wire:keydown.enter.prevent="updateQty({{ $budgetItem->id }})"
+                                                                                    wire:keydown.escape="toggleQty" min=0>
+                                                                                <button class="btn btn-sm btn-primary ms-2"
+                                                                                    wire:click="updateQty({{ $budgetItem->id }})"><i
+                                                                                        class="fas fa-save"></i></button>
+                                                                                <button class="btn btn-sm btn-danger"
+                                                                                    wire:click="toggleQty(null)"><i
+                                                                                        class="fas fa-times"></i></button>
+                                                                            </div>
+                                                                        @endif
                                                                     @endif
                                                                 </td>
                                                                 <td>
                                                                     @if ($editAlertQtyId !== $budgetItem->id)
-                                                                        @if (!$budgetItem->isApproved)
+                                                                        @if ((!$budgetItem->isApproved) && (($quantitySurveyor) || ($superAdmin)))
                                                                             <button class="btn btn-sm btn-warning ms-2"
                                                                                 wire:click="toggleAlertQty({{ $budgetItem->id }})"><i
                                                                                     class="fas fa-pencil-alt"></i></button>
                                                                         @endif
                                                                         <span class="fw-normal">{{ $budgetItem->alert }}</span>
                                                                     @else
-                                                                        <div class="input-group">
-                                                                            <input type="number"
-                                                                                class="form-control form-control-sm d-inline-block w-auto-fit"
-                                                                                wire:model.defer="budgetalertqty"
-                                                                                wire:keydown.enter.prevent="updateAlertQty({{ $budgetItem->id }})"
-                                                                                wire:keydown.escape="toggleAlertQty" min=0>
-                                                                            <button class="btn btn-sm btn-primary ms-2"
-                                                                                wire:click="updateAlertQty({{ $budgetItem->id }})"><i
-                                                                                    class="fas fa-save"></i></button>
-                                                                            <button class="btn btn-sm btn-danger"
-                                                                                wire:click="toggleAlertQty(null)"><i
-                                                                                    class="fas fa-times"></i></button>
-                                                                        </div>
+                                                                        @if(($quantitySurveyor) || ($superAdmin))
+                                                                            <div class="input-group">
+                                                                                <input type="number"
+                                                                                    class="form-control form-control-sm d-inline-block w-auto-fit"
+                                                                                    wire:model.defer="budgetalertqty"
+                                                                                    wire:keydown.enter.prevent="updateAlertQty({{ $budgetItem->id }})"
+                                                                                    wire:keydown.escape="toggleAlertQty" min=0>
+                                                                                <button class="btn btn-sm btn-primary ms-2"
+                                                                                    wire:click="updateAlertQty({{ $budgetItem->id }})"><i
+                                                                                        class="fas fa-save"></i></button>
+                                                                                <button class="btn btn-sm btn-danger"
+                                                                                    wire:click="toggleAlertQty(null)"><i
+                                                                                        class="fas fa-times"></i></button>
+                                                                            </div>
+                                                                        @endif
                                                                     @endif
                                                                 </td>
                                                                 <td>
@@ -533,11 +557,13 @@
                                                                                 data-bs-toggle="modal" data-bs-target="#requisitionModal"
                                                                                 class="btn btn-sm btn-success text-white"> Request</a> --}}
                                                                         @else
-                                                                        <a href="#"
-                                                                            wire:click="deleteBudget({{ $budgetItem->id }})"
-                                                                            data-bs-toggle="modal" data-bs-target="#deleteBudgetModal"
-                                                                            class="btn btn-sm btn-danger text-white"><i
-                                                                                class="fas fa-trash-alt"></i></a>
+                                                                            @if(($quantitySurveyor) || ($superAdmin))
+                                                                                <a href="#"
+                                                                                wire:click="deleteBudget({{ $budgetItem->id }})"
+                                                                                data-bs-toggle="modal" data-bs-target="#deleteBudgetModal"
+                                                                                class="btn btn-sm btn-danger text-white"><i
+                                                                                    class="fas fa-trash-alt"></i></a>
+                                                                            @endif
                                                                         @endif
                                                                     </div>
                                                                 </td>
@@ -621,10 +647,12 @@
                                                                     @elseif (($budgetItem->quantity > 0) && ($budgetItem->budgetBalance == 0))
                                                                         <span class="badge bg-warning">Pending</span>
                                                                     @else
-                                                                        <a href="#"
-                                                                            wire:click="makeRequisition({{ $budgetItem->id }})"
-                                                                            data-bs-toggle="modal" data-bs-target="#requisitionModal"
-                                                                            class="btn btn-sm btn-success text-white"> Request</a>
+                                                                        @if(($projectManager) || ($superAdmin))
+                                                                            <a href="#"
+                                                                                wire:click="makeRequisition({{ $budgetItem->id }})"
+                                                                                data-bs-toggle="modal" data-bs-target="#requisitionModal"
+                                                                                class="btn btn-sm btn-success text-white"> Request</a>
+                                                                        @endif
                                                                     @endif
                                                                 </td>
                                                             </tr>
@@ -658,9 +686,11 @@
                             </div>
                             <div class="ms-auto">
                                 @if ($project && $project->status == 1 && $allRequisitions->count() > 0)
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#approveRequisitionModal"
-                                        class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
-                                        <span class="d-none d-md-inline">Approve All</span></a>
+                                    @if(($procurementOfficer) || ($superAdmin))
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#approveRequisitionModal"
+                                            class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
+                                            <span class="d-none d-md-inline">Approve All</span></a>
+                                    @endif
 
                                     <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('requisitions')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                                 @endif
@@ -708,12 +738,14 @@
                                                 <td>
                                                     @if (!$requisition->status == '1')
                                                         <div class="btn-group" role="group" aria-label="">
-                                                            <a href="#"
-                                                                wire:click="deleteRequisition({{ $requisition->id }})"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#deleteRequisitionModal"
-                                                                class="btn btn-sm btn-danger text-white"><i
-                                                                    class="fas fa-trash-alt"></i></a>
+                                                            @if(($projectManager) || ($superAdmin))
+                                                                <a href="#"
+                                                                    wire:click="deleteRequisition({{ $requisition->id }})"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#deleteRequisitionModal"
+                                                                    class="btn btn-sm btn-danger text-white"><i
+                                                                        class="fas fa-trash-alt"></i></a>
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 </td>
@@ -744,7 +776,7 @@
                     <div class="card-body p-4">
                         <div class="border-bottom border-danger mb-3 d-flex">
                             <div>
-                                <h5 class="card-title fw-semibold pb-2">Material Infow</h5>
+                                <h5 class="card-title fw-semibold pb-2">Material Infow (Store)</h5>
                             </div>
                             <div class="ms-auto">
                                 <div class="btn-group" role="group" aria-label="">
@@ -819,14 +851,14 @@
                     <div class="card-body p-4">
                         <div class="border-bottom border-danger mb-3 d-flex">
                             <div>
-                                <h5 class="card-title fw-semibold pb-2">Material Allocation</h5>
+                                <h5 class="card-title fw-semibold pb-2">Material Allocation (From Store)</h5>
                             </div>
                             <div class="ms-auto">
                                 <div class="btn-group" role="group" aria-label="">
                                     <a href="#" data-bs-toggle="modal" data-bs-target="#distributionModal"
                                             class="btn btn-sm btn-danger text-white"><i
                                             class="far fa-arrow-alt-circle-right fa-rotate-270"></i> <span class="d-none d-md-inline">Out</span></a>
-                                    @if ($allocatedItems->count() > 0)
+                                    @if (($allocatedItems->count() > 0) && (($materialManager) || ($superAdmin)))
                                         <a href="#" data-bs-toggle="modal" data-bs-target="#approveAllocationModal"
                                             class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
                                             <span class="d-none d-md-inline">Approve All</span></a>
@@ -877,7 +909,7 @@
                                                         </td>
                                                         <td>{{ $allocatedItem->receiver }}</td>
                                                         <td>
-                                                            @if ($allocatedItem->flow == 0)
+                                                            @if (($allocatedItem->flow == 0) && (($projectManager) || ($superAdmin)))
                                                                 <a href="#"
                                                                     wire:click="deleteAllocation({{ $allocatedItem->id }})"
                                                                     data-bs-toggle="modal"
