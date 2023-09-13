@@ -21,7 +21,7 @@
                         </div>
                         <div class="ms-auto">
                             @if($admin->isAdmin)
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#addRoleModal" class="btn btn-sm btn-primary text-white"><i class="fas fa-plus-square pr-4"></i>&nbsp;&nbsp; Add User Role</a>
+                                <!--<a href="#" data-bs-toggle="modal" data-bs-target="#addRoleModal" class="btn btn-sm btn-primary text-white"><i class="fas fa-plus-square pr-4"></i>&nbsp;&nbsp; Add User Role</a>-->
                             @endif
                         </div>
                     </div>
@@ -41,7 +41,9 @@
                                 <tr class="">
                                     <th class="text-secondary text-xs font-weight-semibold opacity-7 col-10">User Role</th>
                                     @if($admin->isAdmin)
-                                        <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1">Action</th>
+                                        <!--
+                                            <th class="text-secondary text-xs font-weight-semibold opacity-7 col-1">Action</th>
+                                        -->
                                     @endif
                                 </tr>
                             </thead>
@@ -50,12 +52,14 @@
                                 <tr>
                                     <td>{{$user_role->role}}</td>
                                     @if($admin->isAdmin)
+                                        <!--
                                         <td class="">
                                             <div class="btn-group" role="group" aria-label="">
                                                 <a href="#" wire:click="editRole({{$user_role->id}})" data-bs-toggle="modal" data-bs-target="#editRoleModal" class="btn btn-sm btn-warning text-white"><i class="far fa-edit"></i></a>
                                                 <a href="#" wire:click="deleteRole({{$user_role->id}})" data-bs-toggle="modal" data-bs-target="#deleteRoleModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
                                             </div>
                                         </td>
+                                        -->
                                     @endif
                                 </tr>
                                 @empty
