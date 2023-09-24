@@ -10,7 +10,7 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     {{-- <script src="https://kit.fontawesome.com/ad9c87abbe.js" crossorigin="anonymous"></script> --}}
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/ad9c87abbe.js" crossorigin="anonymous"></script>
 
     <link rel="shortcut icon" type="image/png" href="{{ asset('assets/trackr_favicon.png') }}" />
     <link rel="stylesheet" href="{{ asset('admin/assets/css/styles.min.css') }}" />
