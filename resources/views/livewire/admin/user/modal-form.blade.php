@@ -82,13 +82,20 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">User Status</label>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="status" value="1" wire:model.defer="status" >
-                                    <label class="form-check-label" for="status">
-                                        Active
-                                    </label>
-                                    <span class="labels" data-on="ON" data-off="OFF"></span>
-                                </div>
+                                @if(($admin->id != $user_id) || ($admin->id != 1))
+                                    <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="status" value="1" wire:model.defer="status" >
+                                        <label class="form-check-label" for="status">
+                                            Active
+                                        </label>
+                                        <span class="labels" data-on="ON" data-off="OFF"></span>
+                                    </div>
+                                @else
+                                    <div class="alert alert-danger">
+                                        You cannot Deactivate this account
+                                    </div>
+                                @endif
+
                                 @error('status')
                                     <small class="error text-danger">{{ $message }}</small>
                                 @enderror

@@ -52,7 +52,7 @@
                     </form>
                 @else
                     <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-circle me-2"></i> You are not allowed to add New items. Please contact Administrator.
+                        <i class="fas fa-exclamation-circle me-2"></i> You are not authorised to add New items. Please contact Administrator.
                     </div>
                 @endif
             </div>

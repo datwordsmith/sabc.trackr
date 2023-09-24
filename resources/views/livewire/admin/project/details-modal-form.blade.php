@@ -17,7 +17,9 @@
                                         <select class="form-select" wire:model.defer="selectedUsers.{{ $userRole->id }}" required>
                                             <option value="">Select</option>
                                             @foreach ($users as $user)
-                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                                <option value="{{ $user->id }}">
+                                                    {{ $user->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -74,63 +76,70 @@
                     <h1 class="modal-title fs-5">Make Requisition</h1>
                     <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form wire:submit.prevent="saveRequisition()">
+                @if ($this->pendingRequisition)
                     <div class="modal-body">
-                        <div class="row">
-                            <div class="col-12">
-
-                                <table class="table align-items-center mb-0" style="width:100%">
-                                    <tbody>
-                                        <tr><td class="w-50"><label class="form-label">Material:</label></td> <td>{{ $budgetItemName }}</td></tr>
-                                        <tr><td><label class="form-label">Category:</label></td> <td>{{ $budgetItemCategory }}</td></tr>
-                                        <tr><td><label class="form-label">Unit:</label></td> <td>{{ $budgetItemUnit }}</td></tr>
-                                        <tr><td><label class="form-label">Approved Budget Quantity:</label></td> <td>{{ $budgetItemQuantity }}</td></tr>
-                                        <tr><td><label class="form-label">Previous Requisitions:</label></td> <td>{{ $requisitionSum }}</td></tr>
-                                        @if ($budgetBalance > 0)
-                                            <tr>
-                                                <td><label class="form-label">Vendor:</label></td>
-                                                <td>
-                                                    <select class="form-select" wire:model="selectedVendor">
-                                                        <option value="">Select a vendor</option>
-                                                        @foreach ($vendors as $vendor)
-                                                            <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td><label class="form-label">Requisition Quantity:</label></td>
-                                                <td>
-                                                    <input type="number" class="form-control" id="quantityInput" placeholder="Enter quantity"
-                                                        wire:model.defer="requisitionQuantity" max="{{ $budgetBalance }}" min="1" pattern="[0-9]+" required>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="2">
-                                                    <label class="form-label">Activity:</label>
-                                                    <input type="text" class="form-control" id="activityInput" placeholder="Enter activity" wire:model.defer="budgetActivity" required>
-                                                </td>
-                                            </tr>
-                                        @else
-                                            <tr>
-                                                <td colspan="2" class="text-danger text-center">Item requisitions complete</td>
-                                            </tr>
-                                        @endif
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                            </div>
-
+                        <div class="alert alert-danger">
+                            This Item has a pending requisition.
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" wire:click ="closeModal" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        @if ($budgetBalance > 0)
-                            <button type="submit" class="btn btn-primary">Save</button>
-                        @endif
-                    </div>
-                </form>
+                @else
+                    <form wire:submit.prevent="saveRequisition()">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-12">
+
+                                    <table class="table align-items-center mb-0" style="width:100%">
+                                        <tbody>
+                                            <tr><td class="w-50"><label class="form-label">Material:</label></td> <td>{{ $budgetItemName }}</td></tr>
+                                            <tr><td><label class="form-label">Category:</label></td> <td>{{ $budgetItemCategory }}</td></tr>
+                                            <tr><td><label class="form-label">Unit:</label></td> <td>{{ $budgetItemUnit }}</td></tr>
+                                            <tr><td><label class="form-label">Approved Budget Quantity:</label></td> <td>{{ $budgetItemQuantity }}</td></tr>
+                                            <tr><td><label class="form-label">Previous Requisitions:</label></td> <td>{{ $requisitionSum }}</td></tr>
+                                            @if ($budgetBalance > 0)
+                                                <tr>
+                                                    <td><label class="form-label">Vendor:</label></td>
+                                                    <td>
+                                                        <select class="form-select" wire:model="selectedVendor" required>
+                                                            <option value="">Select a vendor</option>
+                                                            @foreach ($vendors as $vendor)
+                                                                <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><label class="form-label">Requisition Quantity:</label></td>
+                                                    <td>
+                                                        <input type="number" class="form-control" id="quantityInput" placeholder="Enter quantity"
+                                                            wire:model.defer="requisitionQuantity" max="{{ $budgetBalance }}" min="1" pattern="[0-9]+" required>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="2">
+                                                        <label class="form-label">Activity:</label>
+                                                        <input type="text" class="form-control" id="activityInput" placeholder="Enter activity" wire:model.defer="budgetActivity" required>
+                                                    </td>
+                                                </tr>
+                                            @else
+                                                <tr>
+                                                    <td colspan="2" class="text-danger text-center">Item requisitions complete</td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
+
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click ="closeModal" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            @if ($budgetBalance > 0)
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            @endif
+                        </div>
+                    </form>
+                @endif
             </div>
         </div>
     </div>

@@ -274,7 +274,7 @@
                                                                 <td>{{ $budgetItem->material->unit->name }}</td>
                                                                 <td>
                                                                     @if ($editQtyId !== $budgetItem->id)
-                                                                        @if ((!$budgetItem->isApproved) && ($quantitySurveyor))
+                                                                        @if ((!$budgetItem->isApproved) && (($quantitySurveyor) || ($superAdmin)))
                                                                             <button class="btn btn-sm btn-warning ms-2"
                                                                                 wire:click="toggleQty({{ $budgetItem->id }})"><i
                                                                                     class="fas fa-pencil-alt"></i></button>
@@ -498,7 +498,7 @@
                                                                 <td>{{ $budgetItem->material->unit->name }}</td>
                                                                 <td>
                                                                     @if ($editQtyId !== $budgetItem->id)
-                                                                        @if ((!$budgetItem->isApproved) && ($quantitySurveyor))
+                                                                        @if ((!$budgetItem->isApproved) && (($quantitySurveyor) || ($superAdmin)))
                                                                             <button class="btn btn-sm btn-warning ms-2"
                                                                                 wire:click="toggleQty({{ $budgetItem->id }})"><i
                                                                                     class="fas fa-pencil-alt"></i></button>
@@ -609,6 +609,13 @@
                                             <div class="mb-3">
                                                 <input type="text" class="form-control mb-2" wire:model="search" placeholder="Search...">
                                             </div>
+                                            @if (session('alertmessage'))
+                                                <div class="mb-3 alert alert-danger alert-dismissible fade show" role="alert">
+                                                    <i class="fas fa-exclamation-triangle pe-1" style="color: #ff0000;"></i> {{ session('alertmessage') }}
+                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                </div>
+                                            @endif
+
                                             <div class="table-responsive">
                                                 <table id="cummulative_budget" class="table table-striped align-items-center mb-0"
                                                     style="width:100%">
@@ -633,13 +640,22 @@
                                                     </thead>
                                                     <tbody>
                                                         @foreach ($allBudgetItems->sortBy('material.name') as $budgetItem)
-                                                            <tr>
+                                                            @php
+                                                                $isSendAlert = $budgetItem->budgetBalance <= $budgetItem->alert;
+
+                                                            @endphp
+                                                            <tr class="{{ $isSendAlert ? 'table-danger' : '' }}">
                                                                 <td>{{ $budgetItem->material->name }}</td>
                                                                 <td>{{ $budgetItem->material->category->category }}</td>
                                                                 <td>{{ $budgetItem->material->unit->name }}</td>
                                                                 <td class="text-center">{{ $budgetItem->quantity }}</td>
                                                                 <td class="text-center">{{ $budgetItem->requisitionSum }}</td>
-                                                                <td class="text-center">{{ $budgetItem->budgetBalance  }}</td>
+                                                                <td class="text-center">
+                                                                    @if ($isSendAlert)
+                                                                        <i class="fas fa-exclamation-triangle pe-1" style="color: #ff0000;"></i>
+                                                                    @endif
+                                                                    {{ $budgetItem->budgetBalance }}
+                                                                </td>
                                                                 <td class="text-center">{{ $budgetItem->alert  }}</td>
                                                                 <td>
                                                                     @if (($budgetItem->quantity == 0) && ($budgetItem->budgetBalance == 0))

@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire\Admin\Project;
 
-use App\Models\Allocation;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Project;
@@ -10,6 +9,7 @@ use Livewire\Component;
 use App\Models\Material;
 use App\Models\UserRole;
 use App\Models\Inventory;
+use App\Models\Allocation;
 use App\Models\ProjectUser;
 use App\Models\Requisition;
 use App\Models\TotalBudget;
@@ -20,6 +20,7 @@ use App\Models\ProjectBudgetExtra;
 use Illuminate\Support\Facades\DB;
 use App\Models\SupplementaryBudget;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\BudgetItemAlert;
 
 class Details extends Component
 {
@@ -32,8 +33,8 @@ class Details extends Component
     public $editAlertQtyId = null, $editAlertQty = false, $alertQtyError, $extraAlertQtyError;
     public $user;
     public $search, $categories = [], $selectedMaterial, $materials = [], $selectedCategory, $materialsByCategory;
-    public $selectedBudgetItem, $budgetItemName, $budgetItemCategory, $budgetItemQuantity, $budgetItemUnit;
-    public $budgetItemId, $budgetBalance, $requisitionSum, $requisitionQuantity, $budgetActivity, $requisitionId;
+    public $selectedBudgetItem, $budgetItemName, $budgetItemCategory, $budgetItemQuantity, $budgetItemUnit, $budgetItemAlert;
+    public $budgetItemId, $budgetBalance, $requisitionSum, $pendingRequisition, $requisitionQuantity, $budgetActivity, $requisitionId;
     public $requisitionSearch, $inventorySearch, $allocationSearch, $vendors, $selectedVendor, $vendor_id;
     public $inventoryReceiver, $inventoryQuantity, $inventoryPurpose;
     public $totalMaterialQuantity, $selectedInventoryCategory, $selectedInventoryMaterial, $storeSearch;
@@ -43,6 +44,7 @@ class Details extends Component
     public $userCredentials, $currentUserRole, $staffRole;
     public $projectManager, $materialManager, $quantitySurveyor, $inventoryManager, $procurementOfficer, $budgetOfficer;
     public $superAdmin;
+    public $alertRecipient;
 
 
     protected $rules = [
@@ -61,7 +63,9 @@ class Details extends Component
         $this->client = $this->project->client;
         $this->users = User::where('status', 1)->get(); //Fetch only active users
 
-        $this->projectUsers = ProjectUser::all();
+        //$this->projectUsers = ProjectUser::all();
+        $this->projectUsers = ProjectUser::where('project_id', $this->project->id)->get();
+
 
         $this->userRoles = UserRole::all();
 
@@ -193,6 +197,7 @@ class Details extends Component
         }
     }
 
+
     public function refreshProjectUsers()
     {
         $this->projectUsers = ProjectUser::where('project_id', $this->project->id)->get();
@@ -236,12 +241,6 @@ class Details extends Component
             $projectBudget->project_id = $this->projectId;
             $projectBudget->quantity = 0; // Set the initial quantity value if needed
             $projectBudget->save();
-
-            /* $totalBudget = new TotalBudget();
-            $totalBudget->material_id = $this->selectedMaterial;
-            $totalBudget->project_id = $this->projectId;
-            $totalBudget->quantity = 0; // Set the initial quantity value if needed
-            $totalBudget->save(); */
 
             // Reset the form inputs
             $this->selectedCategory = null;
@@ -536,10 +535,13 @@ class Details extends Component
         $this->budgetItemCategory = $selectedBudgetItem->material->category->category;
         $this->budgetItemUnit = $selectedBudgetItem->material->unit->name;
         $this->budgetItemQuantity = $selectedBudgetItem->quantity;
+        $this->budgetItemAlert = $selectedBudgetItem->alert;
 
         $this->requisitionSum = Requisition::where('budget_id', $budgetItemId)->sum('quantity');
 
         $this->budgetBalance = $this->budgetItemQuantity - $this->requisitionSum;
+
+        $this->pendingRequisition = Requisition::where('budget_id', $budgetItemId)->where('status', 0)->exists();
     }
 
     public function saveRequisition()
@@ -557,6 +559,25 @@ class Details extends Component
         $requisition->activity = $this->budgetActivity;
         $requisition->vendor_id = $this->selectedVendor;
         $requisition->save();
+
+        $requisitionSum = Requisition::where('budget_id', $requisition->budget_id)->sum('quantity');
+
+        $totalBudget = TotalBudget::find($requisition->budget_id);
+            $alert = $totalBudget->alert;
+            $quantity = $totalBudget->quantity;
+
+        if (($quantity - $requisitionSum) <= $alert) {
+
+            session()->flash('alertmessage', 'One or more budget items are running out.');
+
+            $alertRecipient = 'emeka.daniels@gmail.com';
+
+            // Create a notifiable instance with the email address
+            $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $alertRecipient);
+
+            $notifiable->notify(new BudgetItemAlert());
+
+        }
 
         session()->flash('requisitionmessage', 'Requisition Successful');
 

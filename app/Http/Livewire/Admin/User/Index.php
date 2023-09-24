@@ -15,7 +15,7 @@ class Index extends Component
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 
-    public $user_id, $name, $email, $password, $confirm_password, $status = 1;
+    public $user_id, $name, $email, $password, $confirm_password, $isAdmin, $status = 1;
     public $search;
 
     public function rules()
@@ -59,11 +59,14 @@ class Index extends Component
 
     public function editUser(int $user_id)
     {
+
         $user = User::FindOrFail($user_id);
         $this->user_id = $user_id;
         $this->name = $user->name;
         $this->email = $user->email;
         $this->status = $user->status;
+        $this->isAdmin = $user->isAdmin;
+
     }
 
     public function updateUser()
