@@ -11,14 +11,18 @@ class BudgetItemAlert extends Notification
 {
     use Queueable;
 
+    public $projectName;
+    public $projectSlug;
+
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($projectName, $projectSlug)
     {
-        //
+        $this->projectName = $projectName;
+        $this->projectSlug = $projectSlug;
     }
 
     /**
@@ -41,11 +45,11 @@ class BudgetItemAlert extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('Budget Item Alert')
+            ->subject('Budget Item Alert for ' . $this->projectName)
             ->line('This is a notification to inform you about a budget item alert.')
-            ->line('You should take action because the budget item alert condition was met.')
-            ->action('View Budget Item', url('/budget-item-alert'))
-            ->line('Thank you for using our application!');
+            ->line('You should take action because the budget item is running low.')
+            ->action('View Budget Item', url('t/project/' . $this->projectSlug))
+            ->line('Thank you for using Trackr!');
     }
 
     /**

@@ -11,71 +11,79 @@
 
 <body>
     <div class="container-fluid min-vh-100 d-flex flex-column">
-        <div class="row flex-grow-1 bg-danger" style="background-image: url('{{ asset('assets/construction_site.png') }}'); background-size: cover; background-repeat: no-repeat;">
+        <div class="row flex-grow-1" style="background-image: url('{{ asset('assets/construction_site.png') }}'); background-size: cover; background-repeat: no-repeat;">
             <!--LEFT SIDE-->
             <div class="col-md-6 d-none d-md-block">
-                <div class="mt-5 ms-5" style="z-index: 3;">
-                    <img src="{{ asset('assets/sabc_logo.png') }}" width="180" alt="">
+                <div class="mt-5 ms-5">
+                    <a href="{{ route('login') }}">
+                        <img src="{{ asset('assets/sabc_logo.png') }}" width="180" alt="">
+                    </a>
                 </div>
             </div>
 
             <!--RIGHT SIDE-->
             <div class="col-md-6 d-flex align-items-center justify-content-center">
-                <div class="card shadow-lg rounded">
-                    <div class="card-body px-4">
-                        @if(session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            <small>{{ session('error') }}</small>
-                        </div>
-                        @endif
-                        <div class="">
-                        <a href="./index.html" class="text-nowrap logo-img text-center d-block py-3 w-100">
-                            <img src="{{ asset('assets/trackr_logo_main.png') }}" width="180" alt="">
-                        </a>
-                        <p class="text-center">SABC Limited</p>
-                        <form method="POST" action="{{ route('login') }}">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="exampleInputEmail1" class="form-label">Username</label>
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-                                @error('email')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                                @enderror
+                <div>
+                    <div class="mb-5 d-flex justify-content-center d-md-none">
+                        <img src="{{ asset('assets/sabc_logo.png') }}" width="180" alt="">
+                    </div>
+
+                    <div class="card shadow-lg rounded">
+                        <div class="card-body px-4">
+                            @if(session('error'))
+                            <div class="alert alert-danger" role="alert">
+                                <small>{{ session('error') }}</small>
                             </div>
-
-                            <div class="mb-4">
-                                <label for="exampleInputPassword1" class="form-label">Password</label>
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
-
-                                @error('password')
+                            @endif
+                            <div class="">
+                            <a href="{{ route('login') }}" class="text-nowrap logo-img text-center d-block py-3 w-100">
+                                <img src="{{ asset('assets/trackr_logo_main.png') }}" width="180" alt="">
+                            </a>
+                            <p class="text-center">SABC Limited</p>
+                            <form method="POST" action="{{ route('login') }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label for="exampleInputEmail1" class="form-label">{{ __('Email Address') }}</label>
+                                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+                                    @error('email')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
-                                @enderror
+                                    @enderror
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="exampleInputPassword1" class="form-label">Password</label>
+                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
+
+                                    @error('password')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+
+                                        <label class="form-check-label" for="remember">
+                                            {{ __('Remember Me') }}
+                                        </label>
+                                    </div>
+
+                                    @if (Route::has('password.request'))
+                                        <a class="btn btn-link text-danger" href="{{ route('password.request') }}">
+                                            {{ __('Forgot Password?') }}
+                                        </a>
+                                    @endif
+                                </div>
+
+
+                                <button type="submit" class="btn btn-lg btn-danger w-100  mb-4 rounded-2">
+                                {{ __('Login') }}
+                                </button>
+                            </form>
                             </div>
-                            <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-
-                                <label class="form-check-label" for="remember">
-                                    {{ __('Remember Me') }}
-                                </label>
-                            </div>
-
-                            @if (Route::has('password.request'))
-                                <a class="btn btn-link text-danger" href="{{ route('password.request') }}">
-                                    {{ __('Forgot Password?') }}
-                                </a>
-                            @endif
-                            </div>
-
-
-                            <button type="submit" class="btn btn-lg btn-danger w-100  mb-4 rounded-2">
-                            {{ __('Login') }}
-                            </button>
-                        </form>
                         </div>
                     </div>
                 </div>

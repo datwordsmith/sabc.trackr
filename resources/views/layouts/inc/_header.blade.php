@@ -6,12 +6,14 @@
             <i class="fas fa-bars" style="color: #ffffff;"></i>
           </a>
         </li>
+        {{--
         <li class="nav-item">
           <a class="nav-link" href="javascript:void(0)">
             <i class="far fa-bell" style="color: #ffffff;"></i>
             <div class="notification bg-primary rounded-circle"></div>
           </a>
         </li>
+        --}}
       </ul>
       <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
         <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
@@ -23,11 +25,11 @@
             </a>
             <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop2">
               <div class="message-body">
+                {{--
                 <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
                   <i class="ti ti-user fs-6"></i>
                   <p class="mb-0 fs-3">My Profile</p>
                 </a>
-                {{--
                 <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
                   <i class="ti ti-mail fs-6"></i>
                   <p class="mb-0 fs-3">My Account</p>

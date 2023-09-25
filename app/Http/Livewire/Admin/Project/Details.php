@@ -562,7 +562,7 @@ class Details extends Component
 
         $requisitionSum = Requisition::where('budget_id', $requisition->budget_id)->sum('quantity');
 
-        $totalBudget = TotalBudget::find($requisition->budget_id);
+        $totalBudget = TotalBudget::with('project')->find($requisition->budget_id);
             $alert = $totalBudget->alert;
             $quantity = $totalBudget->quantity;
 
@@ -572,10 +572,15 @@ class Details extends Component
 
             $alertRecipient = 'emeka.daniels@gmail.com';
 
+            $projectName = $totalBudget->project->name;
+            $projectSlug = $totalBudget->project->slug;
+            $notification = new BudgetItemAlert($projectName, $projectSlug);
+
             // Create a notifiable instance with the email address
             $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $alertRecipient);
 
-            $notifiable->notify(new BudgetItemAlert());
+            // Send the notification
+            $notifiable->notify($notification);
 
         }
 

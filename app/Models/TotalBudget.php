@@ -17,6 +17,11 @@ class TotalBudget extends Model
         'alert',
     ];
 
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id');
+    }
+
     public function material()
     {
         return $this->belongsTo(Material::class);
