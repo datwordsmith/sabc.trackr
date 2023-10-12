@@ -207,6 +207,37 @@
     </div>
     <!-- END MODAL -->
 
+    <!-- REQUEST BUDGET APPROVAL MODAL -->
+    <div wire:ignore.self class="modal fade" id="approvalRequestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Request Budget Approval</h1>
+                    <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div wire:loading class="py-5">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-grow text-danger" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div wire:loading.remove>
+                    <form wire:submit.prevent="approvalRequest()">
+                        <div class="modal-body">
+                            <h6>Do you want to request the Budget Officer to approve this budget?</h6>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click ="closeModal" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check-double"></i> Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END REQUEST BUDGET APPROVAL MODAL -->
+
     <!-- APPROVE BUDGET MODAL -->
     <div wire:ignore.self class="modal fade" id="approveBudgetModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -370,7 +401,7 @@
                             </form>
                         @else
                             <div class="alert alert-danger">
-                                Please contact the Material Manager
+                                Role reserved for the Material Manager
                             </div>
                         @endif
                     </div>
@@ -456,7 +487,7 @@
                             </form>
                         @else
                             <div class="alert alert-danger">
-                                Please contact the Project Manager
+                                Role reserved for the Project Manager
                             </div>
                         @endif
                     </div>

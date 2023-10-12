@@ -7,11 +7,11 @@
 
     @section('breadcrumbs')
         <ol class="breadcrumb">
-            <li class="breadcrumb-item active" aria-current="page">All Users</li>
+            <li class="breadcrumb-item"><a href="{{ url('t/users')}}">Users</a></li>
             <li class="breadcrumb-item"><a href="{{ url('t/users/active')}}">Active</a></li>
             <li class="breadcrumb-item"><a href="{{ url('t/users/inactive')}}">Inactive</a></li>
             @if ($admin->isAdmin)
-                <li class="breadcrumb-item"><a href="{{ url('t/users/admin')}}">Admin</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Admin</li>
             @endif
         </ol>
     @endsection
@@ -75,14 +75,12 @@
                                         </td>
                                         @if ($admin->isAdmin)
                                             <td class="">
-                                                <div class="btn-group" role="group" aria-label="Basic example">
-                                                    <a href="#" wire:click="editUser({{$user->id}})" data-bs-toggle="modal" data-bs-target="#editUserModal" class="btn btn-sm btn-warning text-white"><i class="fas fa-pen"></i></a>
-                                                    @if($user->isAdmin)
+                                                <a href="#" wire:click="editUser({{$user->id}})" data-bs-toggle="modal" data-bs-target="#editUserModal" class="btn btn-sm btn-warning text-white"><i class="fas fa-pen"></i></a>
+                                                @if($user->isAdmin)
 
-                                                    @else
-                                                        <a href="#" wire:click="deleteUser({{$user->id}})" data-bs-toggle="modal" data-bs-target="#deleteUserModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
-                                                    @endif
-                                                </div>
+                                                @else
+                                                    <a href="#" wire:click="deleteUser({{$user->id}})" data-bs-toggle="modal" data-bs-target="#deleteUserModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
+                                                @endif
                                             </td>
                                         @endif
                                     </tr>

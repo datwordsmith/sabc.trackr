@@ -18,6 +18,7 @@ class Inventory extends Model
         'receiver',
         'purpose',
         'flow',
+        'created_by',
     ];
 
     public function material()
@@ -28,5 +29,10 @@ class Inventory extends Model
     public function budget()
     {
         return $this->belongsTo(ProjectBudget::class, 'budget_id', 'budget_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

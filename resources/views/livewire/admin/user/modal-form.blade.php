@@ -22,6 +22,7 @@
                                 <small class="error text-danger">{{ $message }}</small>
                             @enderror
                         </div>
+                        <!--
                         <div class="mb-3">
                             <label class="form-label">Password</label>
                             <input type="password" class="form-control" placeholder = "Password" wire:model.defer="password">
@@ -36,10 +37,14 @@
                                 <small class="error text-danger">{{ $message }}</small>
                             @enderror
                         </div>
+                        -->
                     </div>
                     <div class="modal-footer">
-                        <button type="button" wire:click ="closeModal" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" wire:click ="closeModal" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span wire:loading wire:target="storeUser" class="spinner-grow spinner-grow-sm mr-2" role="status" aria-hidden="true"></span>
+                            Save
+                        </button>
                     </div>
                 </form>
             </div>
@@ -82,7 +87,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">User Status</label>
-                                @if(($admin->id != $user_id) || ($admin->id != 1))
+                                @if(($admin->id != $user_id) || (!$admin->isSuperAdmin))
                                     <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" id="status" value="1" wire:model.defer="status" >
                                         <label class="form-check-label" for="status">

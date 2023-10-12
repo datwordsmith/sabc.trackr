@@ -5,6 +5,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Trackr - Login</title>
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Trackr">
+  <meta property="og:description" content="Inventory Management System for SABC Ltd.">
+  <meta property="og:image" content="{{ asset('assets/trackr_logo_main.png') }}">
+  <meta property="og:image:secure_url" content="{{ asset('assets/trackr_logo_main.png') }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="{{ url()->current() }}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_NG">
+
   <link rel="shortcut icon" type="image/png" href="{{ asset('assets/trackr_favicon.png') }}" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 </head>

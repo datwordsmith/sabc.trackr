@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admin\User;
 
 use App\Models\User;
+use App\Notifications\NewUserAlert;
 use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
@@ -24,8 +25,8 @@ class Index extends Component
             'name' => 'required|string|min:2',
             'email' => 'required|email|unique:users',
             //'email' => 'required|email|unique:users,email,' . $this->user->id,
-            'password' => 'required|string|min:8',
-            'confirm_password' => 'required|same:password',
+            //'password' => 'required|string|min:8',
+            //'confirm_password' => 'required|same:password',
             'status' => 'required|integer|between:0,1',
         ];
     }
@@ -34,22 +35,31 @@ class Index extends Component
     {
         $this->user = $user;
         $this->admin = Auth::user();
+
+
     }
 
     public function resetInput() {
         $this->name = NULL;
         $this->email = NULL;
-        $this->password = NULL;
-        $this->confirm_password = NULL;
+        /* $this->password = NULL;
+        $this->confirm_password = NULL; */
     }
 
     public function storeUser()
     {
         $validatedData = $this->validate();
 
-        $validatedData['password'] = Hash::make($validatedData['password']);
+        $userPassword = preg_replace("/[^a-zA-Z0-9]/", '', Str::random(8));
 
-        User::create($validatedData);
+        $user = new User([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'password' => Hash::make($userPassword),
+        ]);
+        $user->save();
+
+        $user->notify(new NewUserAlert($userPassword));
 
         session()->flash('message', 'User Added Successfully');
 
@@ -119,11 +129,14 @@ class Index extends Component
 
     public function render()
     {
-        $users = User::where('name', 'like', '%'.$this->search.'%')
-                 ->orWhere('email', 'like', '%'.$this->search.'%')
-                 ->orderBy('name', 'ASC')
-                 ->orderBy('email', 'ASC')
-                 ->paginate(10);
+        $users = User::where(function($query) {
+                    $query->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
+                })
+                //->where('isAdmin', 0)
+                ->orderBy('name', 'ASC')
+                ->paginate(10);
+
         return view('livewire.admin.user.index', ['users' => $users])->extends('layouts.admin')->section('content');
     }
 }

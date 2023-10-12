@@ -15,6 +15,9 @@
 
     <div>
         <p>Welcome, {{ $admin->name }} </p>
+        @if($staffRole)
+            <p><strong>Role: </strong>{{$this->staffRole}} @if($superAdmin) <span>+ Super Admin</span>@endif</p>
+        @endif
     </div>
 
     <!-- PROJECT INFO -->
@@ -132,6 +135,12 @@
                             </div>
                             <div class="ms-auto">
                                 @if ($budgetItems->where('isApproved', 0)->count() > 0 && $budgetItems->where('quantity', '<', 1)->count() == 0 && $budgetItems->where('alert', '=', 0)->count() == 0)
+                                    @if(($quantitySurveyor) || ($superAdmin))
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#approvalRequestModal"
+                                            class="btn btn-sm btn-secondary text-white me-2">
+                                            <i class="far fa-paper-plane"></i> <span class="d-none d-md-inline">Request Approval</span> </a>
+                                    @endif
+
                                     @if (($budgetOfficer) || ($superAdmin))
                                         <a href="#" data-bs-toggle="modal" data-bs-target="#approveBudgetModal"
                                             class="btn btn-sm btn-success text-white me-2">
@@ -153,6 +162,11 @@
                                             </div>
                                         @endif
                                         @if ($project && $project->status == 1)
+                                                @if($BudgetApprovalEmailSent)
+                                                    <div class="alert alert-info" >
+                                                        Approval Request Sent
+                                                    </div>
+                                                @endif
                                                 @if ($budgetItems->count() > 0 && $budgetItems->where('isApproved', 0)->count() == 0)
                                                     <div class="mt-3 text-center">
                                                         <p >
@@ -179,42 +193,48 @@
                                                             Add Budget Items
                                                         </div>
                                                         <div class="card-body p-4">
-                                                            @if (session('budgeterror'))
-                                                                <div class="alert alert-danger" role="alert">
-                                                                    {{ session('budgeterror') }}
-                                                                </div>
-                                                            @endif
-                                                            @if(($quantitySurveyor) || ($superAdmin))
-                                                                <form wire:submit.prevent="saveBudget()">
-                                                                    <div class="mb-3">
-                                                                        <select wire:model="selectedCategory" class="form-select" required>
-                                                                            <option value="">Select a category</option>
-                                                                            @foreach ($categories as $category)
-                                                                                <option value="{{ $category->id }}">{{ $category->category }}</option>
-                                                                            @endforeach
-                                                                        </select>
+                                                            @if($projectUsers->isNotEmpty())
+                                                                @if (session('budgeterror'))
+                                                                    <div class="alert alert-danger" role="alert">
+                                                                        {{ session('budgeterror') }}
                                                                     </div>
-                                                                    <div class="mb-3">
-                                                                        <select wire:model="selectedMaterial" class="form-control"
-                                                                            @if (empty($selectedCategory)) disabled @endif required>
-                                                                            <option value="">Select a material</option>
-                                                                            @if (!empty($materials))
-                                                                                @foreach ($materials as $material)
-                                                                                    @if ($material->category_id == $selectedCategory)
-                                                                                        <option value="{{ $material->id }}">{{ $material->name }}</option>
-                                                                                    @endif
+                                                                @endif
+                                                                @if(($quantitySurveyor) || ($superAdmin))
+                                                                    <form wire:submit.prevent="saveBudget()">
+                                                                        <div class="mb-3">
+                                                                            <select wire:model="selectedCategory" class="form-select" required>
+                                                                                <option value="">Select a category</option>
+                                                                                @foreach ($categories as $category)
+                                                                                    <option value="{{ $category->id }}">{{ $category->category }}</option>
                                                                                 @endforeach
-                                                                            @endif
-                                                                        </select>
-                                                                    </div>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <select wire:model="selectedMaterial" class="form-control"
+                                                                                @if (empty($selectedCategory)) disabled @endif required>
+                                                                                <option value="">Select a material</option>
+                                                                                @if (!empty($materials))
+                                                                                    @foreach ($materials as $material)
+                                                                                        @if ($material->category_id == $selectedCategory)
+                                                                                            <option value="{{ $material->id }}">{{ $material->name }}</option>
+                                                                                        @endif
+                                                                                    @endforeach
+                                                                                @endif
+                                                                            </select>
+                                                                        </div>
 
-                                                                    <div class="d-grid">
-                                                                        <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                                                        <div class="d-grid">
+                                                                            <button type="submit" class="btn btn-primary btn-lg">Save</button>
+                                                                        </div>
+                                                                    </form>
+                                                                @else
+                                                                    <div class="alert alert-warning">
+                                                                        Role reserved for the Quantity Surveyor
                                                                     </div>
-                                                                </form>
+                                                                @endif
                                                             @else
                                                                 <div class="alert alert-warning">
-                                                                    Please contact the Quantity Surveyor
+                                                                    No Staff assigned to project.
                                                                 </div>
                                                             @endif
                                                         </div>
@@ -438,7 +458,7 @@
                                                         </form>
                                                     @else
                                                         <div class="alert alert-warning">
-                                                            Please contact the Quantity Surveyor
+                                                            Role reserved for the Quantity Surveyor
                                                         </div>
                                                     @endif
                                                 </div>
@@ -1048,6 +1068,7 @@
             $('#distributionModal').modal('hide');
             $('#deleteAllocationModal').modal('hide');
             $('#approveAllocationModal').modal('hide');
+            $('#approvalRequestModal').modal('hide');
         });
 
 

@@ -10,6 +10,9 @@
             <li class="breadcrumb-item"><a href="{{ url('t/users')}}">Users</a></li>
             <li class="breadcrumb-item"><a href="{{ url('t/users/active') }}">Active</a></li>
             <li class="breadcrumb-item active" aria-current="page">Inactive</li>
+            @if ($admin->isAdmin)
+                <li class="breadcrumb-item"><a href="{{ url('t/users/admin')}}">Admin</a></li>
+            @endif
         </ol>
     @endsection
 
@@ -47,7 +50,7 @@
                             <tbody>
                                 @forelse ($users as $user)
                                 <tr>
-                                    <td>{{$user->name}}</td>
+                                    <td>{{$user->name}} @if($user->isAdmin) <span class="badge text-bg-success ml-2">Admin</span> @endif</td>
                                     <td>{{$user->email}}</td>
                                     <td class="text-center">
 
@@ -61,14 +64,18 @@
                                         <td class="">
                                             <div class="btn-group" role="group" aria-label="Basic example">
                                                 <a href="#" wire:click="editUser({{$user->id}})" data-bs-toggle="modal" data-bs-target="#editUserModal" class="btn btn-sm btn-warning text-white"><i class="fas fa-pen"></i></a>
-                                                <a href="#" wire:click="deleteUser({{$user->id}})" data-bs-toggle="modal" data-bs-target="#deleteUserModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
+                                                @if($user->isAdmin)
+
+                                                @else
+                                                    <a href="#" wire:click="deleteUser({{$user->id}})" data-bs-toggle="modal" data-bs-target="#deleteUserModal" class="btn btn-sm btn-danger text-white"><i class="fas fa-trash-alt"></i></a>
+                                                @endif
                                             </div>
                                         </td>
                                     @endif
                                 </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center text-danger">No Project Found</td>
+                                        <td colspan="6" class="text-center text-danger">No Record Found</td>
                                     </tr>
                                 @endforelse
                             </tbody>

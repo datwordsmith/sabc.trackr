@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admin\User;
 
 use App\Models\User;
+use App\Notifications\NewUserAlert;
 use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
@@ -10,12 +11,12 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
-class Inactive extends Component
+class Admin extends Component
 {
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 
-    public $user_id, $name, $email, $password, $confirm_password, $status = 1;
+    public $user_id, $name, $email, $password, $confirm_password, $isAdmin, $status = 1;
     public $search;
 
     public function rules()
@@ -24,8 +25,8 @@ class Inactive extends Component
             'name' => 'required|string|min:2',
             'email' => 'required|email|unique:users',
             //'email' => 'required|email|unique:users,email,' . $this->user->id,
-            'password' => 'required|string|min:8',
-            'confirm_password' => 'required|same:password',
+            //'password' => 'required|string|min:8',
+            //'confirm_password' => 'required|same:password',
             'status' => 'required|integer|between:0,1',
         ];
     }
@@ -34,22 +35,31 @@ class Inactive extends Component
     {
         $this->user = $user;
         $this->admin = Auth::user();
+
+
     }
 
     public function resetInput() {
         $this->name = NULL;
         $this->email = NULL;
-        $this->password = NULL;
-        $this->confirm_password = NULL;
+        /* $this->password = NULL;
+        $this->confirm_password = NULL; */
     }
 
     public function storeUser()
     {
         $validatedData = $this->validate();
 
-        $validatedData['password'] = Hash::make($validatedData['password']);
+        $userPassword = preg_replace("/[^a-zA-Z0-9]/", '', Str::random(8));
 
-        User::create($validatedData);
+        $user = new User([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'password' => Hash::make($userPassword),
+        ]);
+        $user->save();
+
+        $user->notify(new NewUserAlert($userPassword));
 
         session()->flash('message', 'User Added Successfully');
 
@@ -59,11 +69,14 @@ class Inactive extends Component
 
     public function editUser(int $user_id)
     {
+
         $user = User::FindOrFail($user_id);
         $this->user_id = $user_id;
         $this->name = $user->name;
         $this->email = $user->email;
         $this->status = $user->status;
+        $this->isAdmin = $user->isAdmin;
+
     }
 
     public function updateUser()
@@ -102,7 +115,6 @@ class Inactive extends Component
         } catch (\Exception $e) {
             session()->flash('error', 'An error occurred while deleting the user.');
         }
-
         $this->dispatchBrowserEvent('close-modal');
         $this->resetInput();
     }
@@ -121,10 +133,10 @@ class Inactive extends Component
                     $query->where('name', 'like', '%'.$this->search.'%')
                         ->orWhere('email', 'like', '%'.$this->search.'%');
                 })
-                ->where('status', 0)
-                ->where('status', 0)
+                ->where('isAdmin', 1)
                 ->orderBy('name', 'ASC')
                 ->paginate(10);
-        return view('livewire.admin.user.inactive', ['users' => $users])->extends('layouts.admin')->section('content');
+
+        return view('livewire.admin.user.admin', ['users' => $users])->extends('layouts.admin')->section('content');
     }
 }

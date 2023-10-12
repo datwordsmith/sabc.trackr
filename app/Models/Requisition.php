@@ -16,11 +16,18 @@ class Requisition extends Model
         'activity',
         'status',
         'vendor_id',
+        'created_by',
     ];
 
     public function budget()
     {
         return $this->belongsTo(TotalBudget::class, 'budget_id');
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
 
 }

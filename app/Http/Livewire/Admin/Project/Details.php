@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Admin\Project;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Project;
+use App\Notifications\BudgetApprovalRequest;
 use Livewire\Component;
 use App\Models\Material;
 use App\Models\UserRole;
@@ -43,8 +44,12 @@ class Details extends Component
     protected $budgetItems, $allRequisitions, $extraBudgetItems, $allBudgetItems, $storeItems;
     public $userCredentials, $currentUserRole, $staffRole;
     public $projectManager, $materialManager, $quantitySurveyor, $inventoryManager, $procurementOfficer, $budgetOfficer;
+    public $projectBudgetOfficer;
     public $superAdmin;
     public $alertRecipient;
+
+    public $BudgetApprovalEmailSent = false;
+
 
 
     protected $rules = [
@@ -63,6 +68,9 @@ class Details extends Component
         $this->client = $this->project->client;
         $this->users = User::where('status', 1)->get(); //Fetch only active users
 
+        $this->projectName = $this->project->name;
+        $this->projectSlug = $slug;
+
         //$this->projectUsers = ProjectUser::all();
         $this->projectUsers = ProjectUser::where('project_id', $this->project->id)->get();
 
@@ -79,6 +87,7 @@ class Details extends Component
         $this->projectStore();
 
         $this->userCredentials();
+
     }
 
     //-- CLIENT OPS --//
@@ -240,6 +249,7 @@ class Details extends Component
             $projectBudget->material_id = $this->selectedMaterial;
             $projectBudget->project_id = $this->projectId;
             $projectBudget->quantity = 0; // Set the initial quantity value if needed
+            $projectBudget->created_by = auth()->user()->id; // Set the initial quantity value if needed
             $projectBudget->save();
 
             // Reset the form inputs
@@ -254,6 +264,35 @@ class Details extends Component
             $this->emit('budgetSaved');
         }
     }
+
+    //Request Approval
+    public function approvalRequest()
+    {
+        try {
+            $approver = "Budget Officer";
+            $this->projectBudgetOfficer = User::whereHas('ProjectUser', function ($query) use ($approver) {
+                $query->whereHas('role', function ($roleQuery) use ($approver) {
+                    $roleQuery->where('role', $approver);
+                });
+            })->pluck('email')->first();
+
+            $notification = new BudgetApprovalRequest($this->projectName, $this->projectSlug);
+
+            // Create a notifiable instance with the email address
+            $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $this->projectBudgetOfficer);
+
+            // Send the notification
+            $notifiable->notify($notification);
+
+            $this->BudgetApprovalEmailSent = true;
+
+        } catch (\Exception $e) {
+            // Handle the exception if needed
+        }
+
+        $this->dispatchBrowserEvent('close-modal');
+    }
+
 
     public function approveBudget()
     {
@@ -714,7 +753,6 @@ class Details extends Component
         return $totalStoreQuantity;
     }
 
-
     public function checkExistingAllocation()
     {
         $selectedStoreMaterialId = $this->selectedStoreMaterial;
@@ -962,7 +1000,7 @@ class Details extends Component
         if ($currentUserRole) {
             $this->staffRole = $currentUserRole->role;
 
-            if(($this->staffRole) || ($this->admin->isAdmin))
+            if($this->staffRole)
                 switch($this->staffRole) {
                     case "Project Manager" :
                         $this->projectManager = true;
@@ -1157,6 +1195,7 @@ class Details extends Component
             'pendingAllocations' => $this->pendingAllocation,
             'alertQtyError' => $this->alertQtyError,
             'extraAlertQtyError' => $this->extraAlertQtyError,
+            'projectBudgetOfficer' => $this->projectBudgetOfficer,
         ])->extends('layouts.admin')->section('content');
     }
 

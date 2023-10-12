@@ -9,8 +9,8 @@
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="Trackr">
   <meta property="og:description" content="Inventory Management System for SABC Ltd.">
-  <meta property="og:image" content="{{ asset('assets/trackr_favicon.png') }}">
-  <meta property="og:image:secure_url" content="{{ asset('assets/trackr_favicon.png') }}">
+  <meta property="og:image" content="{{ asset('assets/trackr_logo_main.png') }}">
+  <meta property="og:image:secure_url" content="{{ asset('assets/trackr_logo_main.png') }}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="{{ url()->current() }}">
@@ -23,7 +23,7 @@
 
 <body>
     <div class="container-fluid min-vh-100 d-flex flex-column">
-        <div class="row flex-grow-1" style="background-image: url('{{ asset('assets/construction_site.png') }}'); background-size: cover; background-repeat: no-repeat;">
+        <div class="row flex-grow-1" style="background-image: url('{{ asset('assets/superadmin_bkg.png') }}'); background-size: cover; background-repeat: no-repeat;">
             <!--LEFT SIDE-->
             <div class="col-md-6 d-none d-md-block">
                 <div class="mt-5 ms-5">
@@ -40,7 +40,7 @@
                         <img src="{{ asset('assets/sabc_logo.png') }}" width="180" alt="">
                     </div>
 
-                    <div class="card shadow-lg rounded" style="width: 20rem;">
+                    <div class="card shadow-lg rounded">
                         <div class="card-body px-4">
                             @if(session('error'))
                             <div class="alert alert-danger" role="alert">
@@ -52,13 +52,11 @@
                                 <img src="{{ asset('assets/trackr_logo_main.png') }}" width="180" alt="">
                             </a>
                             <p class="text-center">SABC Limited</p>
-                            <form method="POST" action="{{ route('password.update') }}">
+                            <form method="POST" action="{{ route('login') }}">
                                 @csrf
-
-                                <input type="hidden" name="token" value="{{ $token }}">
                                 <div class="mb-3">
                                     <label for="exampleInputEmail1" class="form-label">{{ __('Email Address') }}</label>
-                                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ $email ?? old('email') }}" required autocomplete="email" autofocus>
+                                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
                                     @error('email')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -66,9 +64,9 @@
                                     @enderror
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="exampleInputPassword1" class="form-label">{{ __('Password') }}</label>
-                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
+                                <div class="mb-4">
+                                    <label for="exampleInputPassword1" class="form-label">Password</label>
+                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
 
                                     @error('password')
                                         <span class="invalid-feedback" role="alert">
@@ -76,14 +74,25 @@
                                         </span>
                                     @enderror
                                 </div>
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
 
-                                <div class="mb-4">
-                                    <label for="confirm-password" class="form-label">{{ __('Confirm Password') }}</label>
-                                    <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+                                        <label class="form-check-label" for="remember">
+                                            {{ __('Remember Me') }}
+                                        </label>
+                                    </div>
+
+                                    @if (Route::has('password.request'))
+                                        <a class="btn btn-link text-danger" href="{{ route('password.request') }}">
+                                            {{ __('Forgot Password?') }}
+                                        </a>
+                                    @endif
                                 </div>
 
+
                                 <button type="submit" class="btn btn-lg btn-danger w-100  mb-4 rounded-2">
-                                    {{ __('Reset Password') }}
+                                {{ __('Login') }}
                                 </button>
                             </form>
                             </div>

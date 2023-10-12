@@ -18,6 +18,7 @@ class ProjectBudget extends Model
         'isApproved',
         'isExtra',
         'alert',
+        'created_by',
     ];
 
     public function material()
@@ -38,6 +39,11 @@ class ProjectBudget extends Model
     public function requisitions()
     {
         return $this->hasMany(Requisition::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
 }

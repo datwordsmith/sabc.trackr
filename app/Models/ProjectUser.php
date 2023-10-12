@@ -24,7 +24,7 @@ class ProjectUser extends Model
 
     public function role()
     {
-        return $this->belongsTo(UserRole::class);
+        return $this->belongsTo(UserRole::class, 'role_id');
     }
 
 }

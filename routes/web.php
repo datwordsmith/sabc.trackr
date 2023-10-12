@@ -16,9 +16,17 @@ use App\Http\Controllers\t\DashboardController;
 
 Route::get('/', function () {
     return view('auth.login');
+})->name('auth.login');
+
+Route::get('/superadmin', function () {
+    return view('auth.superadmin');
 });
 
 Auth::routes();
+
+Route::get('/register', function () {
+    return redirect()->route('auth.login');
+});
 
 //Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
@@ -31,6 +39,7 @@ Route::prefix('t')->middleware(['auth', 'isAdmin'])->group(function (){
         Route::get('/', App\Http\Livewire\Admin\User\Index::class);
         Route::get('/active', App\Http\Livewire\Admin\User\Active::class);
         Route::get('/inactive', App\Http\Livewire\Admin\User\Inactive::class);
+        Route::get('/admin', App\Http\Livewire\Admin\User\Admin::class);
     });
 
     Route::get('/material-categories', App\Http\Livewire\Admin\MaterialCategory\Index::class);

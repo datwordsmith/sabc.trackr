@@ -18,10 +18,16 @@ class Allocation extends Model
         'receiver',
         'purpose',
         'flow',
+        'created_by',
     ];
 
     public function material()
     {
         return $this->belongsTo(Material::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
