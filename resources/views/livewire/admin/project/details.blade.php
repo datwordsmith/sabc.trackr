@@ -181,10 +181,12 @@
 
                                                             </p>
                                                         @else
-                                                            <a href="#" data-bs-toggle="modal" data-bs-target="#activateSupplementaryBudgetModal"
-                                                                class="btn btn-sm btn-success text-white">
-                                                                <i class="fas fa-plus"></i> Add Supplementary Budget
-                                                            </a>
+                                                            @if(($quantitySurveyor) || ($superAdmin))
+                                                                <a href="#" data-bs-toggle="modal" data-bs-target="#activateSupplementaryBudgetModal"
+                                                                    class="btn btn-sm btn-success text-white">
+                                                                    <i class="fas fa-plus"></i> Add Supplementary Budget
+                                                                </a>
+                                                            @endif
                                                         @endif
                                                     </div>
                                                 @else
@@ -722,11 +724,20 @@
                             </div>
                             <div class="ms-auto">
                                 @if ($project && $project->status == 1 && $allRequisitions->count() > 0)
-                                    @if(($procurementOfficer) || ($superAdmin))
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#approveRequisitionModal"
-                                            class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
-                                            <span class="d-none d-md-inline">Approve All</span></a>
-                                    @endif
+                                        @if($hasNullVendor)
+                                            @if(($projectManager) || ($superAdmin))
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#requisionApprovalRequestModal"
+                                                    class="btn btn-sm btn-success text-white me-2">
+                                                    <i class="fas fa-check-double"></i> Request Approval
+                                                </a>
+                                            @endif
+                                        @else
+                                            @if(($procurementOfficer) || ($superAdmin))
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#approveRequisitionModal"
+                                                    class="btn btn-sm btn-success text-white {{ (!$requisitionPending) ? 'disabled' : '' }}"><i class="fas fa-check-double"></i>
+                                                    <span class="d-none d-md-inline">Approve All</span></a>
+                                            @endif
+                                        @endif
 
                                     <button type="button" class="btn btn-sm btn-info " onclick="exportToCSV('requisitions')"><i class="fas fa-file-csv fa-lg"></i> <span class="d-none d-md-inline">Export</span></button>
                                 @endif
@@ -761,7 +772,23 @@
                                                 <td>{{ $requisition->budget->material->name }} ({{ $requisition->budget->material->unit->name }})
                                                 </td>
                                                 <td>{{ $requisition->budget->material->category->category }}</td>
-                                                <td>{{ $requisition->vendor_name }}</td>
+                                                <td>
+                                                    @if(($procurementOfficer) || ($superAdmin))
+                                                        @if ($requisition->status == '0')
+                                                            <a href="#"
+                                                                wire:click="updateVendor({{ $requisition->id }})"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#vendorModal"
+                                                                class="btn btn-sm btn-warning text-white"><i
+                                                                    class="fas fa-pencil-alt"></i></a>
+                                                        @endif
+                                                    @endif
+                                                    @if (empty($requisition->vendor_name) || is_null($requisition->vendor_name))
+                                                        <span class="badge bg-danger py-2">No Vendor</span>
+                                                    @else
+                                                        {{ $requisition->vendor_name }}
+                                                    @endif
+                                                </td>
                                                 <td>{{ $requisition->activity }}</td>
                                                 <td>{{ $requisition->quantity }}</td>
                                                 <td class="text-center">
@@ -1069,6 +1096,8 @@
             $('#deleteAllocationModal').modal('hide');
             $('#approveAllocationModal').modal('hide');
             $('#approvalRequestModal').modal('hide');
+            $('#vendorModal').modal('hide');
+            $('#requisionApprovalRequestModal').modal('hide');
         });
 
 

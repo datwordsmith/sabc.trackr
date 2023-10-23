@@ -96,6 +96,7 @@
                                             <tr><td><label class="form-label">Approved Budget Quantity:</label></td> <td>{{ $budgetItemQuantity }}</td></tr>
                                             <tr><td><label class="form-label">Previous Requisitions:</label></td> <td>{{ $requisitionSum }}</td></tr>
                                             @if ($budgetBalance > 0)
+                                                <!--
                                                 <tr>
                                                     <td><label class="form-label">Vendor:</label></td>
                                                     <td>
@@ -107,6 +108,7 @@
                                                         </select>
                                                     </td>
                                                 </tr>
+                                                -->
                                                 <tr>
                                                     <td><label class="form-label">Requisition Quantity:</label></td>
                                                     <td>
@@ -145,6 +147,48 @@
     </div>
     <!-- END REQUISITION MODAL -->
 
+    <!-- VENDOR MODAL -->
+    <div wire:ignore.self class="modal fade" id="vendorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-bottom border-warning">
+                    <h1 class="modal-title fs-5">Select Vendor</h1>
+                    <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form wire:submit.prevent="addVendor()">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <table class="table align-items-center mb-0" style="width:100%">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <label class="form-label">Vendor:</label>
+                                                <select class="form-select" wire:model="selectedVendor" required>
+                                                    <option value="">Select a vendor</option>
+                                                    @foreach ($vendors as $vendor)
+                                                        <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" wire:click ="closeModal" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        @if(($procurementOfficer) || ($superAdmin))
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        @endif
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- END VENDOR MODAL -->
+
     <!-- DELETE REQUISITION MODAL -->
     <div wire:ignore.self class="modal fade" id="deleteRequisitionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -175,6 +219,37 @@
         </div>
     </div>
     <!-- END DELETE MODAL -->
+
+    <!-- REQUEST REQUISITION APPROVAL MODAL -->
+    <div wire:ignore.self class="modal fade" id="requisionApprovalRequestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Request Requisition Approval</h1>
+                    <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div wire:loading class="py-5">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-grow text-danger" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div wire:loading.remove>
+                    <form wire:submit.prevent="requisitionApprovalRequest()">
+                        <div class="modal-body">
+                            <h6>Do you want to request the Procurement Officer to approve these requisitions?</h6>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click ="closeModal" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check-double"></i> Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END REQUEST BUDGET APPROVAL MODAL -->
 
     <!-- APPROVE REQUISITION MODAL -->
     <div wire:ignore.self class="modal fade" id="approveRequisitionModal" tabindex="-1" aria-hidden="true">

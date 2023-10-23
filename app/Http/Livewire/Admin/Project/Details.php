@@ -5,7 +5,6 @@ namespace App\Http\Livewire\Admin\Project;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Project;
-use App\Notifications\BudgetApprovalRequest;
 use Livewire\Component;
 use App\Models\Material;
 use App\Models\UserRole;
@@ -22,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\SupplementaryBudget;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BudgetItemAlert;
+use App\Notifications\BudgetApprovalRequest;
+use App\Notifications\RequisitionApprovalRequest;
 
 class Details extends Component
 {
@@ -48,7 +49,7 @@ class Details extends Component
     public $superAdmin;
     public $alertRecipient;
 
-    public $BudgetApprovalEmailSent = false;
+    public $BudgetApprovalEmailSent = false, $RequisitionApprovalEmailSent = false;
 
 
 
@@ -82,6 +83,7 @@ class Details extends Component
         $this->categories = MaterialCategory::all(); // Fetch all material categories
         $this->materials = Material::with('unit')->get(); // Fetch all materials with their associated units
         $this->fetchRequisitions();
+        $this->checkRequisitionVendor();
         $this->totalMaterialQuantity = $this->calculateTotalMaterialQuantity();
         $this->totalStoreMaterialQuantity = $this->calculateStoreMaterialQuantity();
         $this->projectStore();
@@ -232,6 +234,7 @@ class Details extends Component
         return $requisitions;
     }
 
+
     public function saveBudget()
     {
         // Check if a record with the same material_id and project_id already exists
@@ -292,7 +295,6 @@ class Details extends Component
 
         $this->dispatchBrowserEvent('close-modal');
     }
-
 
     public function approveBudget()
     {
@@ -548,6 +550,7 @@ class Details extends Component
             $projectBudget->project_id = $this->projectId;
             $projectBudget->quantity = 0; // Set the initial quantity value if needed
             $projectBudget->isExtra = 1;
+            $projectBudget->created_by = auth()->user()->id; // Set the initial quantity value if needed
             $projectBudget->save();
 
             // Reset the form inputs
@@ -596,7 +599,8 @@ class Details extends Component
         $requisition->budget_id = $this->budgetItemId;
         $requisition->quantity = $this->requisitionQuantity;
         $requisition->activity = $this->budgetActivity;
-        $requisition->vendor_id = $this->selectedVendor;
+        //$requisition->vendor_id = $this->selectedVendor;
+        $requisition->created_by = auth()->user()->id;
         $requisition->save();
 
         $requisitionSum = Requisition::where('budget_id', $requisition->budget_id)->sum('quantity');
@@ -620,7 +624,6 @@ class Details extends Component
 
             // Send the notification
             $notifiable->notify($notification);
-
         }
 
         session()->flash('requisitionmessage', 'Requisition Successful');
@@ -632,6 +635,25 @@ class Details extends Component
         $this->requisitionQuantity = null;
         $this->budgetActivity = null;
         $this->selectedVendor = null;
+    }
+
+    public function updateVendor($requisitionId)
+    {
+        $this->requisitionId = $requisitionId;
+    }
+
+    public function addVendor()
+    {
+        Requisition::findOrFail($this->requisitionId)->update([
+            'vendor_id' => $this->selectedVendor,
+        ]);
+
+        // Refresh the allRequisitions data
+        $this->fetchRequisitions();
+        $this->checkRequisitionVendor();
+
+        $this->dispatchBrowserEvent('close-modal');
+        $this->resetInput();
     }
 
     public function deleteRequisition($requisitionId)
@@ -653,6 +675,33 @@ class Details extends Component
         $this->dispatchBrowserEvent('close-modal');
         $this->resetInput();
 
+    }
+
+    public function requisitionApprovalRequest()
+    {
+        try {
+            $approver = "Procurement Officer";
+            $this->projectProcurementOfficer = User::whereHas('ProjectUser', function ($query) use ($approver) {
+                $query->whereHas('role', function ($roleQuery) use ($approver) {
+                    $roleQuery->where('role', $approver);
+                });
+            })->pluck('email')->first();
+
+            $notification = new RequisitionApprovalRequest($this->projectName, $this->projectSlug);
+
+            // Create a notifiable instance with the email address
+            $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $this->projectBudgetOfficer);
+
+            // Send the notification
+            $notifiable->notify($notification);
+
+            $this->RequisitionApprovalEmailSent = true;
+
+        } catch (\Exception $e) {
+            // Handle the exception if needed
+        }
+
+        $this->dispatchBrowserEvent('close-modal');
     }
 
     public function deleteAllocation($allocationId)
@@ -698,6 +747,21 @@ class Details extends Component
             ->where('total_budgets.project_id', $this->projectId)
             ->select('requisitions.*')
             ->paginate(10);
+
+        $this->requisitionPending = Requisition::join('total_budgets', 'requisitions.budget_id', '=', 'total_budgets.id')
+            ->where('total_budgets.project_id', $this->projectId)
+            ->where('status', 0)
+            ->exists();
+    }
+
+
+
+    public function checkRequisitionVendor()
+    {
+        $this->hasNullVendor = Requisition::join('total_budgets', 'requisitions.budget_id', '=', 'total_budgets.id')
+        ->where('total_budgets.project_id', $this->projectId)
+        ->whereNull('vendor_id')
+        ->exists();
     }
 
     //-- END REQUISITION --//
@@ -822,6 +886,7 @@ class Details extends Component
             'quantity' => $this->inventoryQuantity,
             'receiver' => $this->inventoryReceiver,
             'purpose' => $this->inventoryPurpose,
+            'created_by' => auth()->user()->id,
             // Set any other fields you have in your Inventory model
         ]);
 
