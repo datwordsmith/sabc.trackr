@@ -726,7 +726,7 @@
                                 @if ($project && $project->status == 1 && $allRequisitions->count() > 0)
                                         @if($hasNullVendor)
                                             @if(($projectManager) || ($superAdmin))
-                                                <a href="#" data-bs-toggle="modal" data-bs-target="#requisionApprovalRequestModal"
+                                                <a data-bs-toggle="modal" data-bs-target="#requisionApprovalRequestModal"
                                                     class="btn btn-sm btn-success text-white me-2">
                                                     <i class="fas fa-check-double"></i> Request Approval
                                                 </a>
@@ -749,6 +749,20 @@
                                 <input type="text" class="form-control" wire:model="requisitionSearch"
                                     placeholder="Search...">
                             </div>
+                            @if (session('requisitionRequestSent'))
+                                <div class="mb-2">
+                                    <div class="alert alert-success" role="alert">
+                                        {{ session('requisitionRequestSent') }}
+                                    </div>
+                                </div>
+                            @endif
+                            @if (session('requisitionRequestError'))
+                                <div class="mb-2">
+                                    <div class="alert alert-danger mb-2" role="alert">
+                                        {{ session('requisitionRequestError') }}
+                                    </div>
+                                </div>
+                            @endif
                             <div class="table-responsive">
                                 <table id="requisitions" class="table table-striped align-items-center mb-0"
                                     style="width:100%">
@@ -921,10 +935,19 @@
                                     <a href="#" data-bs-toggle="modal" data-bs-target="#distributionModal"
                                             class="btn btn-sm btn-danger text-white"><i
                                             class="far fa-arrow-alt-circle-right fa-rotate-270"></i> <span class="d-none d-md-inline">Out</span></a>
-                                    @if (($allocatedItems->count() > 0) && (($materialManager) || ($superAdmin)))
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#approveAllocationModal"
-                                            class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
-                                            <span class="d-none d-md-inline">Approve All</span></a>
+                                    @if (($allocatedItems->count() > 0) && ($allocationsPending))
+                                        @if(($materialManager) || ($superAdmin))
+                                            <a href="#" data-bs-toggle="modal" data-bs-target="#approveAllocationModal"
+                                                class="btn btn-sm btn-success text-white"><i class="fas fa-check-double"></i>
+                                                <span class="d-none d-md-inline">Approve All</span>
+                                            </a>
+                                        @endif
+                                        @if($projectManager)
+                                            <a data-bs-toggle="modal" data-bs-target="#allocationApprovalRequestModal"
+                                                class="btn btn-sm btn-success text-white me-2">
+                                                <i class="fas fa-check-double"></i> Request Approval
+                                            </a>
+                                        @endif
                                     @endif
                                 </div>
                                 @if ($allocatedItems->count() > 0)
@@ -941,6 +964,22 @@
                                     <div class="mb-3">
                                         <input type="text" class="form-control mb-2" wire:model="allocationSearch" placeholder="Search...">
                                     </div>
+
+                                    @if (session('allocationRequestSent'))
+                                        <div class="mb-2">
+                                            <div class="alert alert-success" role="alert">
+                                                {{ session('allocationRequestSent') }}
+                                            </div>
+                                        </div>
+                                    @endif
+                                    @if (session('allocationRequestError'))
+                                        <div class="mb-2">
+                                            <div class="alert alert-danger mb-2" role="alert">
+                                                {{ session('allocationRequestError') }}
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     <div class="table-responsive">
                                         <table class="table table-striped align-items-center mb-0" id="materialDistribution">
                                             <thead class="table-dark">
@@ -1098,6 +1137,7 @@
             $('#approvalRequestModal').modal('hide');
             $('#vendorModal').modal('hide');
             $('#requisionApprovalRequestModal').modal('hide');
+            $('#allocationApprovalRequestModal').modal('hide');
         });
 
 

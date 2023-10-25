@@ -22,6 +22,7 @@ use App\Models\SupplementaryBudget;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\BudgetItemAlert;
 use App\Notifications\BudgetApprovalRequest;
+use App\Notifications\AllocationApprovalRequest;
 use App\Notifications\RequisitionApprovalRequest;
 
 class Details extends Component
@@ -49,7 +50,7 @@ class Details extends Component
     public $superAdmin;
     public $alertRecipient;
 
-    public $BudgetApprovalEmailSent = false, $RequisitionApprovalEmailSent = false;
+    public $BudgetApprovalEmailSent = false, $RequisitionApprovalEmailSent = false, $AllocationApprovalEmailSent = false;
 
 
 
@@ -89,6 +90,8 @@ class Details extends Component
         $this->projectStore();
 
         $this->userCredentials();
+
+        $this->checkPendingAllocations();
 
     }
 
@@ -603,6 +606,8 @@ class Details extends Component
         $requisition->created_by = auth()->user()->id;
         $requisition->save();
 
+        $this->checkRequisitionVendor();
+
         $requisitionSum = Requisition::where('budget_id', $requisition->budget_id)->sum('quantity');
 
         $totalBudget = TotalBudget::with('project')->find($requisition->budget_id);
@@ -690,15 +695,48 @@ class Details extends Component
             $notification = new RequisitionApprovalRequest($this->projectName, $this->projectSlug);
 
             // Create a notifiable instance with the email address
-            $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $this->projectBudgetOfficer);
+            $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $this->projectProcurementOfficer);
 
             // Send the notification
             $notifiable->notify($notification);
 
             $this->RequisitionApprovalEmailSent = true;
 
+            // Set a success message
+            session()->flash('requisitionRequestSent', 'Approval request email sent successfully.');
+
         } catch (\Exception $e) {
-            // Handle the exception if needed
+            session()->flash('requisitionRequestError', 'Error: Approval request not sent.');
+        }
+
+        $this->dispatchBrowserEvent('close-modal');
+    }
+
+    public function allocationApprovalRequest()
+    {
+        try {
+            $approver = "Material Manager";
+            $this->projectMaterialManager = User::whereHas('ProjectUser', function ($query) use ($approver) {
+                $query->whereHas('role', function ($roleQuery) use ($approver) {
+                    $roleQuery->where('role', $approver);
+                });
+            })->pluck('email')->first();
+
+            $notification = new AllocationApprovalRequest($this->projectName, $this->projectSlug);
+
+            // Create a notifiable instance with the email address
+            $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $this->projectMaterialManager);
+
+            // Send the notification
+            $notifiable->notify($notification);
+
+            $this->AllocationApprovalEmailSent = true;
+
+            // Set a success message
+            session()->flash('allocationRequestSent', 'Approval request email sent successfully.');
+
+        } catch (\Exception $e) {
+            session()->flash('allocationRequestError', 'Error: Approval request not sent.');
         }
 
         $this->dispatchBrowserEvent('close-modal');
@@ -754,7 +792,12 @@ class Details extends Component
             ->exists();
     }
 
-
+    public function checkPendingAllocations()
+    {
+        $this->allocationsPending = Allocation::where('project_id', $this->projectId)
+                ->where('flow', 0)
+                ->exists();
+    }
 
     public function checkRequisitionVendor()
     {
@@ -767,7 +810,6 @@ class Details extends Component
     //-- END REQUISITION --//
 
     //-- INVENTORY ITEMS --//
-
 
     public function calculateTotalMaterialQuantity()
     {
@@ -953,10 +995,12 @@ class Details extends Component
             'receiver' => $this->storeReceiver,
             'purpose' => $this->storePurpose,
             'flow' => 0,
+            'created_by' => auth()->user()->id,
             // Set any other fields you have in your Inventory model
         ]);
 
         $this->projectStore();
+        $this->checkPendingAllocations();
 
         // Reset form fields
         $this->selectedStoreCategory = '';
@@ -1192,6 +1236,7 @@ class Details extends Component
                 })
                 ->orderBy('created_at', 'desc')
                 ->paginate(10, ['*'], 'allAllocationPage');
+
 
         $inventoryCategories = MaterialCategory::whereIn('id', function ($query) {
             $query->select('material_category.id')

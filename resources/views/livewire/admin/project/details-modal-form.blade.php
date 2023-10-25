@@ -249,7 +249,7 @@
             </div>
         </div>
     </div>
-    <!-- END REQUEST BUDGET APPROVAL MODAL -->
+    <!-- END REQUEST REQUISITION APPROVAL MODAL -->
 
     <!-- APPROVE REQUISITION MODAL -->
     <div wire:ignore.self class="modal fade" id="approveRequisitionModal" tabindex="-1" aria-hidden="true">
@@ -548,8 +548,6 @@
                                     @endif
                                 @endif
 
-
-
                                 @if($pendingAllocations)
 
                                 @else
@@ -602,6 +600,37 @@
         </div>
     </div>
     <!-- END DELETE MODAL -->
+
+    <!-- REQUEST ALLOCATION APPROVAL MODAL -->
+    <div wire:ignore.self class="modal fade" id="allocationApprovalRequestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Request Allocation Approval</h1>
+                    <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div wire:loading class="py-5">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-grow text-danger" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div wire:loading.remove>
+                    <form wire:submit.prevent="allocationApprovalRequest()">
+                        <div class="modal-body">
+                            <h6>Do you want to request the Material Manager to approve these allocations?</h6>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click ="closeModal" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check-double"></i> Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END ALLOCATION APPROVAL MODAL -->
 
     <!-- APPROVE AALOCATION MODAL -->
     <div wire:ignore.self class="modal fade" id="approveAllocationModal" tabindex="-1" aria-hidden="true">
