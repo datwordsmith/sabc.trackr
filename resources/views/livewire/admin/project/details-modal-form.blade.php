@@ -344,6 +344,37 @@
     </div>
     <!-- END APPROVE BUDGET MODAL -->
 
+    <!-- REQUEST EXTRA BUDGET APPROVAL MODAL -->
+    <div wire:ignore.self class="modal fade" id="extraApprovalRequestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Request Budget Approval</h1>
+                    <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div wire:loading class="py-5">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-grow text-danger" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div wire:loading.remove>
+                    <form wire:submit.prevent="extraApprovalRequest()">
+                        <div class="modal-body">
+                            <h6>Do you want to request the Budget Officer to approve {{$activeSupplementaryBudget->title}}?</h6>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click ="closeModal" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check-double"></i> Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END REQUEST EXTRA BUDGET APPROVAL MODAL -->
+
     <!-- APPROVE EXTRA BUDGET MODAL -->
     <div wire:ignore.self class="modal fade" id="approveExtraBudgetModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -379,8 +410,8 @@
     <div wire:ignore.self class="modal fade" id="activateSupplementaryBudgetModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5">Supplementary Budget</h1>
+                <div class="modal-header border-bottom border-success">
+                    <h1 class="modal-title fs-5">New Supplementary Budget</h1>
                     <button type="button" class="btn-close" wire:click ="closeModal" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div wire:loading class="py-5">
@@ -391,13 +422,28 @@
                     </div>
                 </div>
                 <div wire:loading.remove>
-                    <form wire:submit.prevent="activateSupplementaryBudget()">
+                    <form wire:submit.prevent="addSupplementaryBudget()">
                         <div class="modal-body">
-                            <h6>Do you want to activate a supplementary budget for this project?</h6>
+                            <div class="row">
+                                <div class="col-12">
+                                    <table class="table align-items-center mb-0" style="width:100%">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <label class="form-label">Budget Title:</label>
+                                                    <input type="text" class="form-control" wire:model.defer="newBudgetTitle" required>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" wire:click ="closeModal" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Yes, Activate</button>
+                            <button type="button" wire:click ="closeModal" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            @if(($quantitySurveyor) || ($superAdmin))
+                                <button type="submit" class="btn btn-success"> Submit</button>
+                            @endif
                         </div>
                     </form>
                 </div>

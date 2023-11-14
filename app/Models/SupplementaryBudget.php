@@ -9,8 +9,10 @@ class SupplementaryBudget extends Model
 {
     use HasFactory;
 
+
     protected $fillable = [
         'project_id',
+        'title',
         'status',
     ];
 
