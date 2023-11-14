@@ -13,6 +13,7 @@ use App\Models\Allocation;
 use App\Models\ProjectUser;
 use App\Models\Requisition;
 use App\Models\TotalBudget;
+use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use App\Models\ProjectBudget;
 use App\Models\MaterialCategory;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Notifications\BudgetItemAlert;
 use App\Notifications\BudgetApprovalRequest;
 use App\Notifications\AllocationApprovalRequest;
+use App\Notifications\ExtraBudgetApprovalRequest;
 use App\Notifications\RequisitionApprovalRequest;
 
 class Details extends Component
@@ -51,6 +53,8 @@ class Details extends Component
     public $alertRecipient;
 
     public $BudgetApprovalEmailSent = false, $RequisitionApprovalEmailSent = false, $AllocationApprovalEmailSent = false;
+
+    public $newBudgetTitle, $supplementaryBudgets, $activeSupplementaryBudgetId, $activeSupplementaryBudget;
 
 
 
@@ -93,7 +97,10 @@ class Details extends Component
 
         $this->checkPendingAllocations();
 
+        $this->supplementaryBudgets = $this->supplementaryBudgetListing();
     }
+
+
 
     //-- CLIENT OPS --//
     public function toggleClient()
@@ -120,7 +127,6 @@ class Details extends Component
         $this->budgetItemId = null; // Reset budgetItemId
         $this->requisitionQuantity = null; // Reset requisitionQuantity
         $this->budgetActivity = null; // Reset budgetActivity
-
     }
 
     public function resetForm($fields = [])
@@ -338,11 +344,40 @@ class Details extends Component
         }
     }
 
+
+    public function extraApprovalRequest()
+    {
+        $this->budgetTitle = $this->activeSupplementaryBudget->title;
+        try {
+            $approver = "Budget Officer";
+            $this->projectBudgetOfficer = User::whereHas('ProjectUser', function ($query) use ($approver) {
+                $query->whereHas('role', function ($roleQuery) use ($approver) {
+                    $roleQuery->where('role', $approver);
+                });
+            })->pluck('email')->first();
+
+            $notification = new ExtraBudgetApprovalRequest($this->projectName, $this->projectSlug, $this->budgetTitle);
+
+            // Create a notifiable instance with the email address
+            $notifiable = (new \Illuminate\Notifications\AnonymousNotifiable)->route('mail', $this->projectBudgetOfficer);
+
+            // Send the notification
+            $notifiable->notify($notification);
+
+            $this->BudgetApprovalEmailSent = true;
+
+        } catch (\Exception $e) {
+            // Handle the exception if needed
+        }
+
+        $this->dispatchBrowserEvent('close-modal');
+    }
+
     public function approveExtraBudget()
     {
         try {
             $updated = ProjectBudget::where('project_id', $this->projectId)
-                ->where('isExtra', 1)
+                ->where('isExtra', $this->activeSupplementaryBudget->id)
                 ->where('isApproved', 0)
                 ->update(['isApproved' => 1]);
 
@@ -350,7 +385,7 @@ class Details extends Component
 
                 // Fetch the approved project materials grouped by material_id
                 $approvedMaterials = ProjectBudget::where('project_id', $this->projectId)
-                    ->where('isExtra', 1)
+                    ->where('isExtra', $this->activeSupplementaryBudget->id)
                     ->where('isApproved', 1)
                     ->get()
                     ->groupBy('material_id');
@@ -527,20 +562,82 @@ class Details extends Component
         $this->resetInput();
     }
 
+
+    public function addSupplementaryBudget()
+    {
+        // Check if a record with the same title and project_id already exists in supplementary_budgets
+        $existingRecord = SupplementaryBudget::where('title', $this->newBudgetTitle)
+            ->where('project_id', $this->projectId)
+            ->exists();
+
+        if ($existingRecord) {
+            // Handle if the record already exists
+            session()->flash('supplementarybudget', ['message' => 'Budget already exists!', 'class' => 'alert-danger']);
+        } else {
+            // Proceed to create the new record as it doesn't already exist
+            SupplementaryBudget::create([
+                'title' => $this->newBudgetTitle,
+                'project_id' => $this->projectId,
+                'status' => 0,
+            ]);
+
+            $this->supplementaryBudgets = $this->supplementaryBudgetListing();
+        }
+
+        // Close the modal or reset the form
+        $this->newBudgetTitle = null;
+        $this->closeModal();
+    }
+
+    public function supplementaryBudgetListing() {
+        $this->supplementaryBudgets = SupplementaryBudget::where('project_id', $this->projectId)
+        ->orderBy('title')
+        ->get();
+    }
+
     public function fetchExtraBudgetItems()
     {
+
         $this->extraBudgetItems = ProjectBudget::with(['material', 'material.category', 'material.unit'])
             ->where('project_id', $this->projectId)
             ->where('isExtra', 1)
             ->paginate(10);
     }
 
+    public function openSupplementaryBudget($supplementaryBudgetId)
+    {
+        SupplementaryBudget::where('id', '=', $supplementaryBudgetId)
+        ->where('project_id', $this->projectId)
+        ->update(['status' => 1]);
+
+        // Update other supplementary budgets to status 0
+        SupplementaryBudget::where('id', '!=', $supplementaryBudgetId)
+        ->where('project_id', $this->projectId)
+        ->update(['status' => 0]);
+
+        $this->supplementaryBudgetListing();
+
+    }
+
+    public function deleteSupplementaryBudget($supplementaryBudgetId)
+    {
+        $supplementaryBudget = SupplementaryBudget::where('id', '=', $supplementaryBudgetId)
+        ->where('project_id', $this->projectId);
+
+        $supplementaryBudget->delete();
+
+        $this->supplementaryBudgetListing();
+
+    }
+
+
     public function saveExtraBudget()
     {
+
         // Check if a record with the same material_id and project_id already exists
         $existingRecord = ProjectBudget::where('material_id', $this->selectedMaterial)
             ->where('project_id', $this->projectId)
-            ->where('isExtra', 1)
+            ->where('isExtra', $this->activeSupplementaryBudget->id)
             ->exists();
 
         if ($existingRecord) {
@@ -552,7 +649,7 @@ class Details extends Component
             $projectBudget->material_id = $this->selectedMaterial;
             $projectBudget->project_id = $this->projectId;
             $projectBudget->quantity = 0; // Set the initial quantity value if needed
-            $projectBudget->isExtra = 1;
+            $projectBudget->isExtra = $this->activeSupplementaryBudget->id;
             $projectBudget->created_by = auth()->user()->id; // Set the initial quantity value if needed
             $projectBudget->save();
 
@@ -791,6 +888,7 @@ class Details extends Component
             ->where('status', 0)
             ->exists();
     }
+
 
     public function checkPendingAllocations()
     {
@@ -1153,12 +1251,21 @@ class Details extends Component
             ->where('isExtra', 0)
             ->paginate(5, ['*'], 'budgetItemsPage');
 
-
+        // Call the supplementaryBudgetListing method to refresh the supplementary budgets
+        $this->supplementaryBudgetListing();
 
         // Get supplementary budget status for the current project
         $supplementaryBudgetStatus = SupplementaryBudget::where('project_id', $this->projectId)->first();
 
-        $extraBudgetItems = ProjectBudget::with(['material', 'material.category', 'material.unit'])
+        $this->activeSupplementaryBudget = SupplementaryBudget::where('status', 1)
+            ->where('project_id', $this->projectId)
+            ->first();
+
+        if ($this->activeSupplementaryBudget) {
+            $extraTableId = Str::slug($this->activeSupplementaryBudget->title);
+
+
+            $extraBudgetItems = ProjectBudget::with(['material', 'material.category', 'material.unit'])
             ->whereHas('material', function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                     ->orWhereHas('category', function ($q) {
@@ -1169,8 +1276,14 @@ class Details extends Component
                     });
             })
             ->where('project_id', $this->projectId)
-            ->where('isExtra', 1)
+            ->where('isExtra', $this->activeSupplementaryBudget->id)
             ->paginate(5, ['*'], 'extraBudgetItemsPage');
+        } else {
+            $extraTableId = "";
+            $extraBudgetItems = "";
+        }
+
+        //dd($this->activeSupplementaryBudget->id);
 
 
         $allRequisitions = Requisition::with(['budget.material', 'budget.material.category', 'budget.material.unit'])
@@ -1280,12 +1393,12 @@ class Details extends Component
         $outgoingsSum = $this->calculateOutgoingsSum();
         $storeBalance = $inflowSum - $outgoingsSum;
 
-
-
         return view('livewire.admin.project.details', [
             'users' => $users,
             'budgetItems' => $budgetItems,
             'allBudgetItems' => $allBudgetItems,
+            'activeSupplementaryBudget' => $this->activeSupplementaryBudget,
+            'extraTableId' => $extraTableId,
             'extraBudgetItems' => $extraBudgetItems,
             'categories' => $categories,
             'materials' => $materials,
@@ -1306,6 +1419,7 @@ class Details extends Component
             'alertQtyError' => $this->alertQtyError,
             'extraAlertQtyError' => $this->extraAlertQtyError,
             'projectBudgetOfficer' => $this->projectBudgetOfficer,
+            'supplementaryBudgets' => $this->supplementaryBudgetListing(),
         ])->extends('layouts.admin')->section('content');
     }
 
