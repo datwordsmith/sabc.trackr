@@ -122,6 +122,7 @@ class Active extends Component
                         ->orWhere('email', 'like', '%'.$this->search.'%');
                 })
                 ->where('status', 1)
+                ->where('email', '<>', 'emeka.daniels@gmail.com')
                 ->orderBy('name', 'ASC')
                 ->paginate(10);
         return view('livewire.admin.user.active', ['users' => $users])->extends('layouts.admin')->section('content');
