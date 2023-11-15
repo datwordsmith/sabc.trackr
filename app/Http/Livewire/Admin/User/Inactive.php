@@ -122,7 +122,7 @@ class Inactive extends Component
                         ->orWhere('email', 'like', '%'.$this->search.'%');
                 })
                 ->where('status', 0)
-                ->where('status', 0)
+                ->where('email', '<>', 'emeka.daniels@gmail.com')
                 ->orderBy('name', 'ASC')
                 ->paginate(10);
         return view('livewire.admin.user.inactive', ['users' => $users])->extends('layouts.admin')->section('content');

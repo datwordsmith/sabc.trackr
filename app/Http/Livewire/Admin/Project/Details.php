@@ -72,7 +72,10 @@ class Details extends Component
         $this->project = Project::where('slug', $slug)->firstOrFail();
         $this->projectId = $this->project->id;
         $this->client = $this->project->client;
-        $this->users = User::where('status', 1)->get(); //Fetch only active users
+
+        $this->users = User::where('status', 1)
+                ->where('email', '<>', 'emeka.daniels@gmail.com')
+                ->get(); //Fetch only active users
 
         $this->projectName = $this->project->name;
         $this->projectSlug = $slug;
@@ -627,7 +630,6 @@ class Details extends Component
         $supplementaryBudget->delete();
 
         $this->supplementaryBudgetListing();
-
     }
 
 
@@ -1255,7 +1257,10 @@ class Details extends Component
         $this->supplementaryBudgetListing();
 
         // Get supplementary budget status for the current project
-        $supplementaryBudgetStatus = SupplementaryBudget::where('project_id', $this->projectId)->first();
+        $supplementaryBudgetStatus = SupplementaryBudget::where('status', 1)
+                                    ->where('project_id', $this->projectId)
+                                    ->count();
+
 
         $this->activeSupplementaryBudget = SupplementaryBudget::where('status', 1)
             ->where('project_id', $this->projectId)

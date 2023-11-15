@@ -345,6 +345,7 @@
     <!-- END APPROVE BUDGET MODAL -->
 
     <!-- REQUEST EXTRA BUDGET APPROVAL MODAL -->
+    @if ($supplementaryBudgetStatus > 0)
     <div wire:ignore.self class="modal fade" id="extraApprovalRequestModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -373,6 +374,7 @@
             </div>
         </div>
     </div>
+    @endif
     <!-- END REQUEST EXTRA BUDGET APPROVAL MODAL -->
 
     <!-- APPROVE EXTRA BUDGET MODAL -->

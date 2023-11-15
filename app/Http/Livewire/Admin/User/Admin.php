@@ -134,6 +134,7 @@ class Admin extends Component
                         ->orWhere('email', 'like', '%'.$this->search.'%');
                 })
                 ->where('isAdmin', 1)
+                ->where('email', '<>', 'emeka.daniels@gmail.com')
                 ->orderBy('name', 'ASC')
                 ->paginate(10);
 
